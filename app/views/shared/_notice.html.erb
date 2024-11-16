@@ -1,0 +1,5 @@
+<% if notice.present?  %>
+    <p class="notice bg-green-100 rounded my-3 p-2"><%= notice %></p>
+    <% elsif alert.present?%>
+    <p class="alert bg-red-100 rounded my-3 p-2"><%= alert %></p>
+<% end %>

@@ -1,0 +1,45 @@
+<header class="bg-gray-800 text-white rounded mt-2">
+  <div class="container mx-auto px-4 flex justify-between items-center py-4">
+    <!-- Logo -->
+    <div class="text-lg font-bold">
+      <%= link_to "My Blog" , root_path , class:'hover:text-blue-300 text-2xl no-underline text-white font-bold'%>
+    </div>
+    
+    <!-- Desktop Menu -->
+    <nav class="hidden md:flex space-x-6">
+      <% if user_signed_in? %>
+        <%#= link_to "Profile" , edit_user_registration_path %>
+        <p  class="hover:text-black hover:bg-white hover:rounded no-underline text-white font-bold p-1 m-0"> <%= current_user.username  %></p>
+        <%= button_to "Log Out" , destroy_user_session_path, method: :delete , data: { turbo_confirm: "Are you sure to Log Out ?"} , class:'hover:text-white hover:bg-red-400 hover:rounded no-underline text-red-400 font-bold p-1' %>
+      <% else %>
+        <%= link_to "Log In" , new_user_session_path , class:'hover:text-black hover:bg-white hover:rounded no-underline text-white font-bold p-1' %>
+        <%#= link_to "Sign Up" , new_user_registration_path %>
+      <% end %>
+    </nav>
+    
+    <!-- Mobile Menu Button -->
+    <button id="menu-btn" class="md:hidden text-2xl focus:outline-none">
+      ☰
+    </button>
+  </div>
+  
+  <!-- Mobile Menu -->
+  <nav id="mobile-menu" class="hidden flex-col space-y-4 px-4 pb-4 md:hidden">
+    <% if user_signed_in? %>
+        <%#= link_to "Profile" , edit_user_registration_path %>
+        <p  class="hover:text-black hover:bg-white hover:rounded no-underline text-white font-bold p-1 m-0"> <%= current_user.username  %></p>
+        <%= button_to "Log Out" , destroy_user_session_path, method: :delete , data: { turbo_confirm: "Are you sure to Log Out ?"} , class:'hover:text-white hover:bg-red-400 hover:rounded no-underline text-red-400 font-bold p-1' %>
+      <% else %>
+        <%= link_to "Log In" , new_user_session_path , class:'hover:text-black hover:bg-white hover:rounded no-underline text-white font-bold p-1' %>
+        <%#= link_to "Sign Up" , new_user_registration_path %>
+      <% end %>
+  </nav>
+</header>
+
+<script>
+  // Toggle the mobile menu visibility
+  document.getElementById('menu-btn').addEventListener('click', function () {
+    const mobileMenu = document.getElementById('mobile-menu');
+    mobileMenu.classList.toggle('hidden');
+  });
+</script>
