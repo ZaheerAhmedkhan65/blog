@@ -8,10 +8,26 @@
       <p class="m-0 px-2 pb-2"><%= blog_post.body%></p>
     </div>
     <% if user_signed_in? %>
-      <div class="flex gap-2 items-end px-2 pb-2">
-        <%= link_to "View" , blog_post , class:'no-underline text-blue-300 font-bold' %>
-        <%= link_to "Edit" , edit_blog_post_path(blog_post) , class:'no-underline text-blue-400 font-bold'%>
-        <%= button_to "Delete", blog_post , method: :delete, data: {turbo_confirm:"Are you sure to delete this post?"}  , class:'no-underline text-red-400 font-bold' %>
+     
+      <div class="px-2 py-2">
+        <% if blog_post.draft? %>
+          <div class="flex items-start justify-end">
+            <div class="px-2 rounded-full bg-gray-100 text-gray-400 font-bold">Draft</div>
+          </div>
+        <% elsif blog_post.scheduled? %>
+          <div class="flex items-start justify-end">
+            <div class="px-2 rounded-full bg-blue-100 text-blue-400 font-bold">Scheduled</div>
+          </div>
+        <% else %>
+          <div class="flex items-start justify-end">
+            <div class="px-2 rounded-full bg-green-100 text-green-400 font-bold">Published</div>
+          </div>
+        <% end %>
+        <div class="flex gap-2 items-end">
+          <%= link_to "View" , blog_post , class:'no-underline text-blue-300 font-bold' %>
+          <%= link_to "Edit" , edit_blog_post_path(blog_post) , class:'no-underline text-blue-400 font-bold'%>
+          <%= button_to "Delete", blog_post , method: :delete, data: {turbo_confirm:"Are you sure to delete this post?"}  , class:'no-underline text-red-400 font-bold' %>
+        </div>
       </div>
     <% end %>
   </div>
