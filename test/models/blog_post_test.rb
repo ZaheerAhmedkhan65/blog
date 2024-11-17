@@ -6,11 +6,11 @@ class BlogPostTest < ActiveSupport::TestCase
   end
 
   test "draft? returns false for published blog post" do
-    refute blog_posts(:published).draft?
+    assert_not blog_posts(:published).draft?
   end
 
   test "draft? returns false for scheduled blog post" do
-    refute blog_posts(:scheduled).draft?
+    assert_not blog_posts(:scheduled).draft?
   end
 
   test "published? returns true for published blog post" do
@@ -18,11 +18,11 @@ class BlogPostTest < ActiveSupport::TestCase
   end
 
   test "published? returns false for draft blog post" do
-    refute blog_posts(:draft).published?
+    assert_not blog_posts(:draft).published?
   end
 
   test "published? returns false for scheduled blog post" do
-    refute blog_posts(:scheduled).published?
+    assert_not blog_posts(:scheduled).published?
   end
 
   test "scheduled? returns true for scheduled blog post" do
@@ -30,11 +30,10 @@ class BlogPostTest < ActiveSupport::TestCase
   end
 
   test "scheduled? returns false for draft blog post" do
-    refute blog_posts(:draft).scheduled?
+    assert_not blog_posts(:draft).scheduled?
   end
 
   test "scheduled? returns false for published blog post" do
-    refute blog_posts(:published).scheduled?
+    assert_not blog_posts(:published).scheduled?
   end
-
 end
