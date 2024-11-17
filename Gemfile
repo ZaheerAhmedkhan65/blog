@@ -59,3 +59,7 @@ end
 gem "devise", "~> 4.9"
 
 gem "tailwindcss-rails", "~> 3.0"
+
+gem "rails-timeago"
+
+gem "font-awesome-rails"

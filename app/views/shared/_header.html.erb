@@ -2,37 +2,65 @@
   <div class="container mx-auto px-4 flex justify-between items-center py-4">
     <!-- Logo -->
     <div class="text-lg font-bold">
-      <%= link_to "My Blog" , root_path , class:'hover:text-blue-300 text-2xl no-underline text-white font-bold'%>
+      <%= link_to "My Blog", root_path, class: 'hover:text-blue-300 text-2xl no-underline text-white font-bold' %>
     </div>
-    
+
     <!-- Desktop Menu -->
     <nav class="hidden md:flex space-x-6">
       <% if user_signed_in? %>
-        <%#= link_to "Profile" , edit_user_registration_path %>
-        <p  class="hover:text-black hover:bg-white hover:rounded no-underline text-white font-bold p-1 m-0"> <%= current_user.username  %></p>
-        <%= button_to "Log Out" , destroy_user_session_path, method: :delete , data: { turbo_confirm: "Are you sure to Log Out ?"} , class:'hover:text-white hover:bg-red-400 hover:rounded no-underline text-red-400 font-bold p-1' %>
+        <div class="relative inline-block text-left">
+          <!-- Dropdown Button -->
+          <button 
+            class="inline-flex w-full justify-center items-center rounded-full border border-gray-300 bg-white text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none" 
+            data-dropdown-button aria-expanded="false" aria-haspopup="true">
+            <span class="text-3xl px-2">
+              <%= current_user.username.first%>
+            </span>
+          </button>
+
+          <!-- Dropdown Menu -->
+          <div 
+            class="absolute right-0 z-10 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none hidden" 
+            data-dropdown-menu>
+            <div class="py-1">
+              <div class="block px-4 py-1 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900">
+                <%= current_user.username %>
+              </div>
+              <div class="block px-4 py-1 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900">
+                <%= button_to "Log Out", destroy_user_session_path, method: :delete, 
+                data: { turbo_confirm: "Are you sure to Log Out?" }, 
+                class: 'hover:text-white hover:bg-red-400 hover:rounded no-underline text-red-400 font-bold p-1' %>
+              </div>
+            </div>
+          </div>
+        </div>
       <% else %>
-        <%= link_to "Log In" , new_user_session_path , class:'hover:text-black hover:bg-white hover:rounded no-underline text-white font-bold p-1' %>
-        <%#= link_to "Sign Up" , new_user_registration_path %>
+        <%= link_to "Log In", new_user_session_path, class: 'hover:text-black hover:bg-white hover:rounded no-underline text-white font-bold p-1' %>
       <% end %>
     </nav>
-    
+
     <!-- Mobile Menu Button -->
     <button id="menu-btn" class="md:hidden text-2xl focus:outline-none">
       ☰
     </button>
   </div>
-  
+
   <!-- Mobile Menu -->
   <nav id="mobile-menu" class="hidden flex-col space-y-4 px-4 pb-4 md:hidden">
     <% if user_signed_in? %>
-        <%#= link_to "Profile" , edit_user_registration_path %>
-        <p  class="hover:text-black hover:bg-white hover:rounded no-underline text-white font-bold p-1 m-0"> <%= current_user.username  %></p>
-        <%= button_to "Log Out" , destroy_user_session_path, method: :delete , data: { turbo_confirm: "Are you sure to Log Out ?"} , class:'hover:text-white hover:bg-red-400 hover:rounded no-underline text-red-400 font-bold p-1' %>
-      <% else %>
-        <%= link_to "Log In" , new_user_session_path , class:'hover:text-black hover:bg-white hover:rounded no-underline text-white font-bold p-1' %>
-        <%#= link_to "Sign Up" , new_user_registration_path %>
-      <% end %>
+      <div class="py-1">
+        <div class="px-2 py-1 text-sm text-white-700 hover:bg-gray-100 hover:text-gray-900">
+          <%= current_user.username %>
+        </div>
+        <div class="px-2 py-1 text-sm hover:bg-gray-100 hover:text-gray-900">
+          <%= button_to "Log Out", destroy_user_session_path, method: :delete, 
+          data: { turbo_confirm: "Are you sure to Log Out?" }, 
+          class: 'hover:text-white hover:bg-red-400 hover:rounded no-underline text-red-400 font-bold p-1' %>
+        </div>
+      </div>
+    <% else %>
+      <%= link_to "Log In", new_user_session_path, class: 'hover:text-black hover:bg-white hover:rounded no-underline text-white font-bold p-1' %>
+    <% end %>
   </nav>
 </header>
 
@@ -41,5 +69,22 @@
   document.getElementById('menu-btn').addEventListener('click', function () {
     const mobileMenu = document.getElementById('mobile-menu');
     mobileMenu.classList.toggle('hidden');
+  });
+
+  // Dropdown functionality
+  document.querySelectorAll('[data-dropdown-button]').forEach(button => {
+    button.addEventListener('click', function () {
+      const menu = this.nextElementSibling;
+      const isVisible = menu.classList.contains('hidden');
+      document.querySelectorAll('[data-dropdown-menu]').forEach(menu => menu.classList.add('hidden'));
+      if (isVisible) menu.classList.remove('hidden');
+    });
+  });
+
+  // Close dropdowns when clicking outside
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('[data-dropdown-button]')) {
+      document.querySelectorAll('[data-dropdown-menu]').forEach(menu => menu.classList.add('hidden'));
+    }
   });
 </script>

@@ -1,6 +1,9 @@
-<div class="border rounded my-5 flex justify-between">
-    <div>
-      <p class="m-0 px-2 pt-2 font-bold text-2xl"><%= @blog_post.title %></p>
-      <p class="m-0 px-2 pb-2"><%= @blog_post.body%></p>
-    </div>
+<div class="flex justify-between items-center mt-5">
+  <h1 class="pt-2 m-0 text-white"><%= @blog_post.title %></h1>
+  <% if @blog_post.published? || @blog_post.scheduled?  %>
+    <p class="m-0 px-2 text-sm"><%= timeago_tag(@blog_post.published_at, no_suffix: true, format: :long) %></p>
+  <% end %>
+</div>
+<div class="border rounded mb-5 mt-2 bg-gray-800 text-white">
+  <p class="m-0 px-2 pb-2"><%= @blog_post.body%></p>
 </div>

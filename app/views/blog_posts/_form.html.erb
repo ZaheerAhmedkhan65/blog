@@ -1,44 +1,61 @@
-<%= form_with model: blog_post, local: true, class: "space-y-6 bg-white px-6 pb-6 rounded shadow" do |form| %>
+<div class="bg-gray-900 text-white p-6 rounded-md">
+  <%= form_with model: blog_post, local: true, class: "space-y-6" do |form| %>
 
-  <div>
-    <%= form.label :title, class: "block font-medium text-gray-700" do %>
-      Title
-      <span class="text-red-500">*</span>
-    <% end %>
-    <%= form.text_field :title, class: "mt-1 block w-full rounded border-gray-300 shadow-sm focus:ring focus:ring-blue-500" %>
-    <% if form.object.errors[:title].any? %>
-      <% form.object.errors[:title].each do |message| %>
-        <p class="text-red-500 text-sm mt-1"><%= message %></p>
-      <% end %>
-    <% end %>
-  </div>
-
-  <div>
-  <%= form.label :body, class: "block font-medium text-gray-700" do %>
-      Body
-      <span class="text-red-500">*</span>
-    <% end %>
-    <%= form.text_area :body, class: "mt-1 block w-full rounded border-gray-300 shadow-sm focus:ring focus:ring-blue-500" %>
-    <% if form.object.errors[:body].any? %>
-      <% form.object.errors[:body].each do |message| %>
-        <p class="text-red-500 text-sm mt-1"><%= message %></p>
-      <% end %>
-    <% end %>
-  </div>
-
+    <!-- Title Field -->
     <div>
-  <%= form.label :published_at, class: "block font-medium text-gray-700"%>
-    <%= form.datetime_select :published_at, include_blank: true ,class: "mt-1 block w-full rounded border-gray-300 shadow-sm focus:ring focus:ring-blue-500" %>
-    <% if form.object.errors[:published_at].any? %>
-      <% form.object.errors[:published_at].each do |message| %>
-        <p class="text-red-500 text-sm mt-1"><%= message %></p>
+      <%= form.label :title, class: "block font-medium" do %>
+        Title
+        <span class="text-red-500">*</span>
       <% end %>
-    <% end %>
-  </div>
+      <%= form.text_field :title, class: "mt-1 block w-full rounded border-gray-700 shadow-sm bg-gray-800 text-white focus:ring focus:ring-blue-500" %>
+      <% if form.object.errors[:title].any? %>
+        <% form.object.errors[:title].each do |message| %>
+          <p class="text-red-500 text-sm mt-1"><%= message %></p>
+        <% end %>
+      <% end %>
+    </div>
+
+    <!-- Body Field -->
+    <div>
+      <%= form.label :body, class: "block font-medium" do %>
+        Body
+        <span class="text-red-500">*</span>
+      <% end %>
+      <%= form.text_area :body, class: "mt-1 block w-full rounded border-gray-700 shadow-sm bg-gray-800 text-white focus:ring focus:ring-blue-500" %>
+      <% if form.object.errors[:body].any? %>
+        <% form.object.errors[:body].each do |message| %>
+          <p class="text-red-500 text-sm mt-1"><%= message %></p>
+        <% end %>
+      <% end %>
+    </div>
+
+    <!-- Published At Field -->
+    <div>
+      <%= form.label :published_at, class: "block font-medium" %>
+      <%= form.datetime_select :published_at, include_blank: true, class: "mt-1 block w-full rounded border-gray-700 shadow-sm bg-gray-800 text-white focus:ring focus:ring-blue-500" %>
+      <% if form.object.errors[:published_at].any? %>
+        <% form.object.errors[:published_at].each do |message| %>
+          <p class="text-red-500 text-sm mt-1"><%= message %></p>
+        <% end %>
+      <% end %>
+    </div>
+
+    <!-- Submit Button -->
+    <div>
+      <%= form.button "Submit", class: "bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 font-bold focus:outline-none" %>
+    </div>
+
+  <% end %>
+</div>
 
 
-  <div>
-    <%= form.button "Submit", class: "bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 focus:outline-none" %>
-  </div>
-
-<% end %>
+<style>
+select {
+  background-color: #2d3748; /* Tailwind gray-800 */
+  color: white;
+}
+option {
+  background-color: #2d3748; /* Tailwind gray-800 */
+  color: white;
+}
+</style>
