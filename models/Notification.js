@@ -1,4 +1,4 @@
-const db = require('../config/connection');
+const db = require('../config/db');
 
 class Notification {
     static async createNotification(userId, actor_id, type='follow', post_id=null) {
