@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
-    "dev": "npm install && nodemon server.js",
+    "dev": "npx nodemon server.js",
     "start": "node server.js"
   },
   "keywords": [],

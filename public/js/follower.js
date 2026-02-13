@@ -43,14 +43,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function displayFollowers(result) {
-        console.log("result follower", result);
         if (!result.success || !result.data || !Array.isArray(result.data.followers)) {
             throw new Error('Invalid followers data received');
         }
-        console.log("Followers data:", result.data.followers);
 
         const followers = result.data.followers;
-        console.log("Followers array:", followers);
         if (followers.length === 0) {
             followersContainer.innerHTML = `
                 <div class="text-center py-5">

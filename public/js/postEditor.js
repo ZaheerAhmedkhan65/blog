@@ -373,8 +373,30 @@ class PostEditor {
             spinner.classList.remove('d-none');
 
             const formData = new FormData(form);
-            const data = Object.fromEntries(formData.entries());
-            
+            const data = {};
+
+            for (let [key, value] of formData.entries()) {
+                if (key === 'is_draft') {
+                    // Convert checkbox "on"/undefined to boolean
+                    data[key] = value === 'on';
+                } else if (key === 'parent_post_id' && value) {
+                    // Convert to integer if present
+                    data[key] = parseInt(value, 10);
+                } else if (key === 'scheduled_at' && value) {
+                    // Optional: append seconds if missing (Joi iso() may require them)
+                    // Example: if value matches YYYY-MM-DDTHH:mm, add ":00"
+                    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value)) {
+                        data[key] = value + ':00';
+                    } else {
+                        data[key] = value;
+                    }
+                } else if (value !== '') {
+                    // Include only non‑empty values
+                    data[key] = value;
+                }
+                // Keys with empty string are omitted entirely
+            }
+
             // For edit mode, include the post ID
             if (this.config.mode === 'edit') {
                 data.id = document.getElementById('edit-post-id').value;
@@ -421,13 +443,16 @@ class PostEditor {
                 });
 
                 if (response.ok) {
-                    const responseData = await response.json();
+                    const rawResponse = await response.json();
+                    const responseData = rawResponse.data;
                     if (typeof this.config.onSuccess === 'function') {
                         this.config.onSuccess(responseData);
                     }
                 } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    console.error("Server error:", response.status, errorData);
                     if (typeof this.config.onError === 'function') {
-                        this.config.onError('Failed to process post');
+                        this.config.onError(errorData.error || 'Failed to process post');
                     }
                 }
             } catch (error) {
@@ -456,7 +481,7 @@ class PostEditor {
         const preview = document.getElementById(this.config.previewId);
         const editImageBtn = document.getElementById(this.config.editImageBtnId);
         const removeImageBtn = document.getElementById(this.config.removeImageBtnId);
-        const mediaUrlInput = document.getElementById(this.config.mediaUrlId);4
+        const mediaUrlInput = document.getElementById(this.config.mediaUrlId);
         const cropperImage = document.getElementById(this.config.cropperImageId); 
 
         if (url) {

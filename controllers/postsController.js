@@ -11,17 +11,10 @@ const PostsController = {
                 ...req.body,
                 media_url: req.file ? req.file.path : null
             };
-            console.log("Creating post with data:", postData, "for user:", req.user.userId);
             const result = await PostService.createPost(postData, req.user.userId);
-            console.log("Post created successfully:", result);
             res.status(201).json({
                 success: true,
-                data: {
-                    ...result,
-                    likes: formatNumberCompact(result.likes || 0),
-                    dislikes: formatNumberCompact(result.dislikes || 0),
-                    reposts: formatNumberCompact(result.reposts || 0)
-                },
+                data: result,
                 message: result.is_draft ? "Post saved as draft" : "Post created successfully"
             });
         } catch (error) {
@@ -55,7 +48,6 @@ const PostsController = {
         try {
             const { id } = req.params;
             const { limit = 20, offset = 0, includeDrafts = false } = req.query;
-            console.log("getAllUserPosts called with:", { id, limit, offset, includeDrafts });
             const result = await PostService.getPostsByUser(
                 parseInt(id),
                 req.user.userId,
@@ -65,7 +57,6 @@ const PostsController = {
                     includeDrafts: includeDrafts === 'true'
                 }
             );
-            console.log("Posts fetched:", result);
             // Format the response
             const formattedPosts = result.posts.map(post => ({
                 ...post,
@@ -174,12 +165,7 @@ const PostsController = {
 
             res.json({
                 success: true,
-                data: {
-                    ...result,
-                    likes: formatNumberCompact(result.likes || 0),
-                    dislikes: formatNumberCompact(result.dislikes || 0),
-                    reposts: formatNumberCompact(result.reposts || 0)
-                },
+                data: result,
                 message: "Post updated successfully"
             });
         } catch (error) {
@@ -391,8 +377,6 @@ const PostsController = {
                 period
             });
 
-            console.log("Trending posts fetched:", trendingPosts);
-
             // Format the response
             const formattedPosts = trendingPosts.map(post => ({
                 ...post,
@@ -406,8 +390,6 @@ const PostsController = {
                 },
                 engagement_score: post.engagement_score ? Math.round(post.engagement_score * 100) / 100 : 0
             }));
-
-            console.log("Formatted posts:", formattedPosts);
 
             res.json({
                 success: true,

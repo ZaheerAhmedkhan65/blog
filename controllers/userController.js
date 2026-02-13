@@ -126,8 +126,6 @@ const userController = {
                 followed_at: formatRelativeTime(follower.created_at)
             }));
 
-            console.log('Followers result:', result);
-
             res.json({
                 success: true,
                 data: {
@@ -158,8 +156,6 @@ const userController = {
                 ...follow,
                 followed_at: formatRelativeTime(follow.created_at)
             }));
-
-            console.log('Following result:', result);
 
             res.json({
                 success: true,

@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
             scheduledTimeTextId: 'edit-scheduled-time-text',
             isDraftId: 'edit-is-draft',
             onSuccess: (responseData) => {
-                const updatedPost = responseData.updatedPost;
+                const updatedPost = responseData.post;
                 const postElement = document.getElementById(`post-${updatedPost.id}`);
                 
                 if (postElement) {
@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 const bootstrapModal = bootstrap.Modal.getInstance(editPostModal);
                 bootstrapModal.hide();
-                notification(responseData.message, "success");
+                notification(responseData.message || 'Post updated successfully', "success");
             },
             onError: (message) => {
                 notification(message, 'error');
