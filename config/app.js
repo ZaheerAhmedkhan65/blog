@@ -28,8 +28,12 @@ app.use((req, res, next) => {
     res.locals.user = req.user || null;
     next();
 }); 
-
-const routes = require('../routes/applicationRoutes');
+let routes;
+if(process.NODE_ENV == 'production') {
+    routes = require('../routes/appRoutes');  
+}else{
+    routes = require('../routes/applicationRoutes');
+}
 routes(app);
 
 module.exports = app;
