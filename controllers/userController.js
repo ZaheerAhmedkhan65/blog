@@ -75,7 +75,7 @@ const userController = {
         try {
             const currentUserId = req.user.userId;
             const suggestedUsers = await UserService.getSuggestedUsers(currentUserId);
-
+            
             res.json(suggestedUsers);
         } catch (error) {
             console.error('Error getting suggested users:', error);
@@ -125,7 +125,7 @@ const userController = {
                 ...follower,
                 followed_at: formatRelativeTime(follower.created_at)
             }));
-
+            
             res.json({
                 success: true,
                 data: {
@@ -156,7 +156,7 @@ const userController = {
                 ...follow,
                 followed_at: formatRelativeTime(follow.created_at)
             }));
-
+            
             res.json({
                 success: true,
                 data: {

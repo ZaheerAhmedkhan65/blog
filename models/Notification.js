@@ -43,6 +43,11 @@ class Notification {
         }));
     }
 
+    static async getAllNotifications() {
+        const [notifications] = await db.query('SELECT * FROM notifications');
+        return notifications;
+    }
+
     static async markNotificationAsRead(notificationId) {
         const [result] = await db.query('UPDATE notifications SET is_read = 1 WHERE id = ?', [notificationId]);
         return result.affectedRows > 0;

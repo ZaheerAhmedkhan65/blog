@@ -4,27 +4,32 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="shortcut icon" href="/images/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
     <script src="/js/bootstrap.min.js"></script>
     <title><%= title %></title>
 </head>
 <body>
     <%- include('../partials/_header') %>
-        <div class="row gx-0">
-            <% if(user) { %>
-            <!-- Left Sidebar -->
-            <%- include('../partials/_sidebar') %>
-            
-            <!-- Main Content -->
-            <div class="col-lg-7 col-md-10 col-10 main-feed py-3">
-            <% } %>
-                <%- body %>
-            <% if(user) { %>
+    <div class="container container-fluid px-0 px-md-3 px-lg-5">
+            <div class="row gx-0">
+                <% if(user) { %>
+                <!-- Left Sidebar -->
+                <%- include('../partials/_sidebar') %>
+                
+                <!-- Main Content -->
+                <div class="col-lg-6 col-md-9 col-10 main-feed py-3">
+                <% } %>
+                    <%- body %>
+                <% if(user) { %>
+                </div>
+                <!-- Suggested Column -->
+                <%- include('../partials/_suggested') %>
+                <% } %>
             </div>
-            <!-- Suggested Column -->
-            <%- include('../partials/_suggested') %>
-            <% } %>
-        </div>
-    <%- include('../partials/_footer') %>
     </div>
+    <%- include('../partials/_footer') %>
 </body>
 </html>

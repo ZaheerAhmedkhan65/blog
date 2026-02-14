@@ -71,16 +71,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
         notificationsContainer.innerHTML = `
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="mb-0">Notifications</h5>
                 ${pagination.unreadCount > 0 ? `
                     <button class="btn btn-sm btn-outline-primary mark-all-read">
-                        <i class="bi bi-check-all"></i> Mark all as read
+                        Mark all as read
                     </button>
                 ` : ''}
             </div>
             <ul class="list-group">
                 ${notifications.map(notification => `
                     <li class="list-group-item ${notification.is_read ? '' : 'bg-light'}" data-notification-id="${notification.id}">
+                    ${!notification.is_read ? `
+                    <button class="btn p-0 m-0 mark-read-btn" data-id="${notification.id}">` : ''}
                         <div class="d-flex justify-content-between flex-grow-1">
                             <div class="d-flex align-items-center gap-2">
                                 <a href="/${notification.actor?.name || 'user'}" class="text-decoration-none text-dark">
@@ -91,14 +92,14 @@ document.addEventListener("DOMContentLoaded", () => {
                                          height="40"
                                          onerror="this.src='/images/default-avatar.png'">
                                 </a>
-                                <div class="d-flex flex-column">
+                                <div class="d-flex align-items-start flex-column">
                                     <a href="/${notification.actor?.name || 'user'}" class="text-decoration-none text-dark">
                                         <b class="card-title m-0">${notification.actor?.name || 'User'}</b>
                                     </a>
                                     ${notification.message ? `
                                         <a href="${notification.post_id ? `/${notification.actor?.name || 'user'}/status/${notification.post_id}` : `/${notification.actor?.name || 'user'}`}" 
                                            class="text-decoration-none text-dark">
-                                            <p class="card-text m-0">${notification.message}</p>
+                                            <p class="card-text m-0 text-truncate text-start">${notification.message}</p>
                                         </a>
                                     ` : `
                                         <p class="card-text m-0">
@@ -111,15 +112,12 @@ document.addEventListener("DOMContentLoaded", () => {
                                     `}
                                 </div>
                             </div>
-                            <div class="d-flex flex-column align-items-end">
+                            <div class="pt-1">
                                 <small class="text-muted">${notification.created_at || 'Just now'}</small>
-                                ${!notification.is_read ? `
-                                    <button class="btn btn-sm btn-link mark-read-btn" data-id="${notification.id}">
-                                        <i class="bi bi-check"></i> Mark read
-                                    </button>
-                                ` : ''}
                             </div>
                         </div>
+
+                   ${!notification.is_read ? ` </button>` : ''}
                     </li>
                 `).join('')}
             </ul>
@@ -142,7 +140,7 @@ document.addEventListener("DOMContentLoaded", () => {
         document.querySelectorAll('.mark-read-btn').forEach(btn => {
             btn.addEventListener('click', function () {
                 const notificationId = this.dataset.id;
-                markAsRead(notificationId, this.closest('.list-group-item'));
+                markAsRead(notificationId);
             });
         });
 
@@ -161,7 +159,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    function markAsRead(notificationId, notificationElement) {
+    function markAsRead(notificationId) {
         fetch(`/notifications/${notificationId}/mark_as_read`, {
             method: 'PUT',
             headers: {
@@ -172,12 +170,7 @@ document.addEventListener("DOMContentLoaded", () => {
         })
             .then(handleResponse)
             .then(response => {
-                if (response.success) {
-                    notificationElement.classList.remove('bg-light');
-                    const btn = notificationElement.querySelector('.mark-read-btn');
-                    if (btn) btn.remove();
-                    showToast('Notification marked as read', 'success');
-                }
+                console.log('Notification marked as read:', response);
             })
             .catch(error => {
                 console.error('Error marking notification as read:', error);
