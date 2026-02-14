@@ -15,7 +15,7 @@ module.exports = (app) => {
     const routesPath = path.join(__dirname, '..', 'routes');
     const routeFiles = fs
   .readdirSync(routesPath)
-  .filter(f => f.endsWith('Routes.js') && f !== 'applicationRoutes.js');
+        .filter(f => f.endsWith('Routes.js') && f !== 'applicationRoutes.js' && f !== 'appRoutes.js');
 
     routeFiles.forEach(file => {
         const route = require(path.join(routesPath, file));
