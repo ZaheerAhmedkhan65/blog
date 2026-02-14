@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
     const followersContainer = document.querySelector("#followers-container");
-    
+
     // Show loading state
     followersContainer.innerHTML = `
         <div class="text-center py-5">
@@ -10,25 +10,23 @@ document.addEventListener("DOMContentLoaded", () => {
             <p class="mt-2">Loading followers...</p>
         </div>
     `;
-    
+
     const followingForm = document.querySelector("#followers-form");
-    if(followingForm){
- followingForm.addEventListener("submit", (event) => {
-        event.preventDefault();
-        fetch(followingForm.action, {
-        headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-        },
-        credentials: "include",
-    })
-    .then(handleResponse)
-    .then(displayFollowers)
-    .catch(handleError);
-    })
-   
+    if (followingForm) {
+        followingForm.addEventListener("submit", (event) => {
+            event.preventDefault();
+            fetch(followingForm.action, {
+                headers: {
+                    "Content-Type": "application/json",
+                    Accept: "application/json",
+                },
+                credentials: "include",
+            })
+                .then(handleResponse)
+                .then(displayFollowers)
+                .catch(handleError);
+        });
     }
-    
 
     function handleResponse(response) {
         if (!response.ok) {
@@ -59,7 +57,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         followersContainer.innerHTML = ''; // Clear loading state
-        
+
         followers.forEach((follower) => {
             const followerCard = document.createElement("div");
             followerCard.classList.add("card", "mb-3");
@@ -81,52 +79,19 @@ document.addEventListener("DOMContentLoaded", () => {
                             <p class="text-muted mb-1">@${follower.user.email.split('@')[0]}</p>
                             ${follower.bio ? `<p class="card-text mt-2">${follower.bio}</p>` : ''}
                         </div>
-                        <p class="text-muted">${follower.followed_at}</p>
+                         <div class="d-flex flex-column">
+                            <p class="text-muted">${follower.followed_at}</p>
+                            <button class="btn btn-sm btn-primary rounded-pill follow-btn" 
+                                data-user-id="${follower.user.id}"
+                                style="min-width: 80px">
+                                Follow
+                            </button>
+                        </div>
                     </div>
                 </div>
             `;
             followersContainer.appendChild(followerCard);
         });
-
-        // Add event delegation for follow buttons
-        followersContainer.addEventListener('click', handleFollowAction);
-    }
-
-    function handleFollowAction(e) {
-        if (e.target.classList.contains('follow-btn')) {
-            const btn = e.target;
-            const userId = btn.dataset.userId;
-            const isFollowing = btn.classList.contains('btn-outline-secondary');
-            
-            btn.disabled = true;
-            btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>`;
-            
-            fetch(`/users/${userId}/follow`, {
-                method: isFollowing ? 'DELETE' : 'POST',
-                headers: {
-                    "Content-Type": "application/json",
-                    Accept: "application/json",
-                },
-                credentials: "include",
-            })
-            .then(response => {
-                if (!response.ok) throw new Error('Follow action failed');
-                return response.json();
-            })
-            .then(data => {
-                // Update button state
-                btn.classList.toggle('btn-outline-secondary');
-                btn.classList.toggle('btn-primary');
-                btn.textContent = isFollowing ? 'Follow' : 'Following';
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showToast('Action failed. Please try again.', 'danger');
-            })
-            .finally(() => {
-                btn.disabled = false;
-            });
-        }
     }
 
     function handleError(error) {
@@ -137,19 +102,5 @@ document.addEventListener("DOMContentLoaded", () => {
                 <button class="btn btn-link p-0" onclick="window.location.reload()">Try again</button>
             </div>
         `;
-    }
-
-    function showToast(message, type = 'success') {
-        // Implement your toast notification system here
-        const toast = document.createElement('div');
-        toast.className = `toast show align-items-center text-white bg-${type}`;
-        toast.innerHTML = `
-            <div class="d-flex">
-                <div class="toast-body">${message}</div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-            </div>
-        `;
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 3000);
     }
 });

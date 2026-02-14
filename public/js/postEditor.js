@@ -398,7 +398,7 @@ class PostEditor {
                 if (response.ok) {
                     const responseData = await response.json();
                     const post = responseData.data || responseData;
-                    console.log("Post saved:", post);
+                    
                     if (typeof this.config.onSuccess === 'function') {
                         this.config.onSuccess(post);
                     }

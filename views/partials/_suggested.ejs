@@ -1,7 +1,7 @@
 <div class="col-lg-3 d-none d-lg-block py-3 px-2 max-vh-100 min-vh-100 position-sticky top-0">
   <div class="card">
     <div class="card-body">
-      <p class="card-title fw-bold fs-5 mb-0">Suggested Users</p>
+      <p class="card-title fw-bold fs-5 mb-0">Who to follow</p>
       <ul class="suggested-users-container list-group list-group-flush p-0">
         <div class="my-3">
           <div class="spinner-border text-primary" role="status">
@@ -82,17 +82,15 @@
     
     const createUserCard = (user) => {
       const userElement = document.createElement('li');
-      userElement.classList.add('list-group-item');
+      userElement.classList.add('list-group-item', "px-0");
       userElement.dataset.userId = user.id;
-      
-      const isFollowing = user.isFollowing || false;
       
       userElement.innerHTML = `
         <div class="d-flex align-items-center justify-content-between">
           <a href="/${user.name}" class="text-decoration-none d-flex align-items-center flex-grow-1">
             <img src="${user.avatar || '/images/default-avatar.png'}" 
                  alt="${user.name}" 
-                 class="rounded-circle me-2 border border-2 ${isFollowing ? 'border-success' : 'border-primary'}" 
+                 class="rounded-circle me-2 border border-2 border-primary" 
                  width="50" 
                  height="50" 
                  loading="lazy"
@@ -102,10 +100,10 @@
               <small class="text-muted text-truncate" style="max-width: 120px">@${user.username || user.email.split('@')[0]}</small>
             </div>
           </a>
-          <button class="btn ${isFollowing ? 'btn-outline-success' : 'btn-primary'} rounded-pill follow-btn" 
-                  data-user-id="${user.id}"
-                  style="min-width: 80px">
-            ${isFollowing ? 'Following' : 'Follow'}
+          <button class="btn btn-sm btn-primary rounded-pill follow-btn" 
+            data-user-id="${user.id}"
+            style="min-width: 80px">
+            Follow
           </button>
         </div>
       `;
@@ -118,7 +116,7 @@
   if (e.target.classList.contains('follow-btn')) {
     const btn = e.target;
     const userId = btn.dataset.userId;
-    const isFollowing = btn.classList.contains('btn-outline-success');
+    const isFollowing = btn.classList.contains('btn-outline-primary');
     const endpoint = isFollowing ? 'unfollow' : 'follow';
     const method = isFollowing ? 'DELETE' : 'POST';
     
@@ -144,20 +142,13 @@
       
       // Update UI
       if (isFollowing) {
-        btn.classList.remove('btn-outline-success');
+        btn.classList.remove('btn-outline-primary');
         btn.classList.add('btn-primary');
         btn.textContent = 'Follow';
       } else {
         btn.classList.remove('btn-primary');
-        btn.classList.add('btn-outline-success');
-        btn.textContent = 'Following';
-      }
-      
-      // Update avatar border
-      const avatar = btn.closest('.list-group-item').querySelector('img');
-      if (avatar) {
-        avatar.classList.toggle('border-primary');
-        avatar.classList.toggle('border-success');
+        btn.classList.add('btn-outline-primary');
+        btn.textContent = 'Unfollow';
       }
       
       showNotification(data.message, 'success');
@@ -166,7 +157,7 @@
       console.error('Follow action failed:', error);
       showNotification(error.message || 'Action failed. Please try again.', 'danger');
       // Reset button state if error occurs
-      btn.textContent = isFollowing ? 'Following' : 'Follow';
+      btn.textContent = isFollowing ? 'Unfollow' : 'Follow';
     } finally {
       btn.disabled = false;
     }

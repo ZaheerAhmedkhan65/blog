@@ -1,15 +1,14 @@
-<%- include('../partials/_header') %>
-    
 <div class="container">
     <div class="auth-card bg-white">
         <div class="auth-header">
-            <h5 class="mb-0">Sign in to your account</h5>
+            <img src="/images/logo/c/blog_128.png" class="me-2" alt="logo" width="100">
+            <h2 class="mb-0">Sign in to your account</h2>
         </div>
         <div class="auth-body">
             <form action="/auth/signin" method="post">
                 <div class="mb-3">
-                    <label for="name" class="form-label">Username or Email</label>
-                    <input type="text" class="form-control" id="name" name="name" placeholder="Enter your username or email" required>
+                    <label for="name" class="form-label">Name or Email</label>
+                    <input type="text" class="form-control" id="name" name="name" placeholder="Enter your name or email" required>
                 </div>
                 <div class="mb-3">
                     <label for="password" class="form-label">Password</label>
@@ -36,5 +35,4 @@
     </div>
 </div>
 
-    <script src="/js/showPassword.js"></script>
-<%- include('../partials/_footer') %>
+<script src="/js/showPassword.js"></script>

@@ -123,6 +123,7 @@
 <script>
   const userEmail = "<%= userData.email %>";
   const userDataId = "<%= userData.id %>";
+  const userName = "<%= userData.name %>";
   const userId = "<%= userId %>";
   const postsContainer = document.querySelector('.posts-container');
   const timeFilters = document.querySelectorAll('.time-filter');
@@ -170,7 +171,7 @@
       // Clear previous posts
       postsContainer.innerHTML = '';
       if(posts.length == 0){
-        postsContainer.innerHTML = `<p class="text-dark">No posts created by <a href="/${userDataId}/profile" class="badge bg-primary-subtle text-dark fw-bold text-decoration-none">@${userEmail.split('@')[0]}</a> yet.</p>`;
+        postsContainer.innerHTML = `<p class="text-dark">No posts created by <a href="/${userName}" class="badge bg-primary-subtle text-dark fw-bold text-decoration-none">@${userEmail.split('@')[0]}</a> yet.</p>`;
       }else{
  // Add new posts to the container
       posts.forEach((post) => {
