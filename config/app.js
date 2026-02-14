@@ -31,14 +31,4 @@ app.use((req, res, next) => {
 const routes = require('../routes/applicationRoutes');
 routes(app);
 
-app.get('/', async (req, res) => {
-    try {
-        const user = req.user;
-        return res.render('index', { title: 'Blog', user, userId: req.user.userId });
-    } catch (error) {
-        console.error(error);
-        return res.status(401).redirect('/auth/signin');
-    }
-});
-
 module.exports = app;
