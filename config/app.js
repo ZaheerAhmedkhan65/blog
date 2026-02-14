@@ -7,6 +7,7 @@ const cookieParser = require('cookie-parser');
 const methodOverride = require("method-override");
 const expressLayouts = require("express-ejs-layouts");
 const app = express();
+require('dotenv').config();
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());

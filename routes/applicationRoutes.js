@@ -13,7 +13,9 @@ const routeMounts = {
 
 module.exports = (app) => {
     const routesPath = path.join(__dirname, '..', 'routes');
-    const routeFiles = fs.readdirSync(routesPath).filter(f => f.endsWith('.js'));
+    const routeFiles = fs
+  .readdirSync(routesPath)
+  .filter(f => f.endsWith('Routes.js') && f !== 'applicationRoutes.js');
 
     routeFiles.forEach(file => {
         const route = require(path.join(routesPath, file));
