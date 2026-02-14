@@ -1,3 +1,4 @@
+// js/deletePost.js
 document.addEventListener('DOMContentLoaded', () => {
     // Select the parent container that holds all post elements
     const postsContainer = document.querySelector('.posts-container');  // Make sure this is the correct container
@@ -26,11 +27,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         notification(deletedPost.message, 'success');
                     } else {
                         const data = await response.json();
-                        notification(data.message || 'Failed to delete post','error');
+                        notification(data.message || 'Failed to delete post', "danger");
                     }
                 } catch (error) {
                     console.error('Error:', error);
-                    notification('An error occurred while deleting the post', 'error');
+                    notification('An error occurred while deleting the post', "danger");
                 }
             }
         }

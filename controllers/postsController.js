@@ -1,328 +1,450 @@
-const Post = require('../models/Post');
-const User = require('../models/User');
-const { format } = require('date-fns');
-const PostLike = require('../models/PostLike');
-const PostRepost = require('../models/PostRepost');
-const Notification = require('../models/Notification');
-const Follower = require('../models/Follower');
+//controllers/postsController.js
+const PostService = require('../services/post.service');
+const UserService = require('../services/user.service');
 const { formatRelativeTime, formatNumberCompact } = require('../middlware/timeFormate');
 
 const PostsController = {
     // Create a new post
     async create(req, res) {
         try {
-            let {
-                content,
-                media_url = null,
-                parent_post_id = null,
-                is_draft = false,
-                scheduled_at = null,
-                published_at = null
-            } = req.body;
-            
-            // Convert empty strings to null
-            scheduled_at = scheduled_at?.trim() === '' ? null : scheduled_at;
-            published_at = published_at?.trim() === '' ? null : published_at;
-            // Validate required fields
-            if (!content) {
-                return res.status(400).json({ error: 'Content and user_id are required.' });
-            }
-
-            // Ensure data types are accurate
-            is_draft = Boolean(is_draft);
-            parent_post_id = parent_post_id || null;
-            media_url = media_url || null;
-
-            // Handle publishing logic
-            const isScheduled = scheduled_at && new Date(scheduled_at) > new Date();
-            if (!is_draft && !isScheduled && !published_at) {
-                published_at = new Date(); // publish immediately
-            }
-
-            const post = await Post.createPost(
-                content,
-                req.user.userId,
-                media_url,
-                parent_post_id,
-                is_draft,
-                scheduled_at,
-                published_at
-            );
-
-            post.user = {
-                name: req.user.username,
-                avatar: req.user.avatar,
-                email: req.user.email,
-                id: req.user.userId
+            const postData = {
+                ...req.body,
+                media_url: req.file ? req.file.path : null
             };
-            const followers = await Follower.getFollowersByUserId(req.user.userId);
-            followers.forEach(async(follower) => {
-               await Notification.createNotification(follower.follower_id, req.user.userId, 'new_post', post.id);
-            })
-            res.status(201).json({ post, message: "Post created successfully" });
+            const result = await PostService.createPost(postData, req.user.userId);
+            res.status(201).json({
+                success: true,
+                data: result,
+                message: result.is_draft ? "Post saved as draft" : "Post created successfully"
+            });
         } catch (error) {
             console.error('Error creating post:', error);
-            res.status(500).json({ error: 'Internal Server Error' });
+
+            // Handle specific error types
+            let statusCode = 500;
+            let errorMessage = 'Internal Server Error';
+
+            if (error.message.includes('validation') || error.message.includes('required')) {
+                statusCode = 400;
+                errorMessage = error.message;
+            } else if (error.message.includes('not found')) {
+                statusCode = 404;
+                errorMessage = error.message;
+            } else if (error.message.includes('authorized') || error.message.includes('permission')) {
+                statusCode = 403;
+                errorMessage = error.message;
+            }
+
+            res.status(statusCode).json({
+                success: false,
+                error: errorMessage,
+                details: process.env.NODE_ENV === 'development' ? error.message : undefined
+            });
         }
     },
 
-    // Get all posts
+    // Get all posts by user
     async getAllUserPosts(req, res) {
         try {
-            let posts = await Post.getPostsByUser(req.params.id);
-
-            // Get engagement data for each post
-            posts = await Promise.all(posts.map(async post => {
-                const reactions = await Post.getReactions(post.id);
-                const repostCount = await Post.getRepostCount(post.id);
-                const userReaction = await Post.getUserReaction(post.id, req.user.userId);
-                const hasReposted = await Post.hasReposted(post.id, req.user.userId);
-
-                return {
-                    ...post,
-                    user: {
-                        id: post.user_id,
-                        name: post.name,
-                        avatar: post.avatar,
-                        email: post.email
-                    },
-                    likes: formatNumberCompact(reactions.likes),
-                    dislikes: formatNumberCompact(reactions.dislikes),
-                    reposts: formatNumberCompact(repostCount),
-                    userReaction,
-                    hasReposted
-                };
+            const { id } = req.params;
+            const { limit = 20, offset = 0, includeDrafts = false } = req.query;
+            const result = await PostService.getPostsByUser(
+                parseInt(id),
+                req.user.userId,
+                {
+                    limit: parseInt(limit),
+                    offset: parseInt(offset),
+                    includeDrafts: includeDrafts === 'true'
+                }
+            );
+            // Format the response
+            const formattedPosts = result.posts.map(post => ({
+                ...post,
+                likes: formatNumberCompact(post.likes || 0),
+                dislikes: formatNumberCompact(post.dislikes || 0),
+                reposts: formatNumberCompact(post.reposts || 0),
+                created_at: formatRelativeTime(post.created_at),
+                user: {
+                    ...post.user,
+                    created_at: formatRelativeTime(post.user.created_at)
+                }
             }));
-            res.json(posts);
+
+            res.json({
+                success: true,
+                data: {
+                    posts: formattedPosts,
+                    pagination: {
+                        total: result.total,
+                        limit: parseInt(limit),
+                        offset: parseInt(offset),
+                        hasMore: result.hasMore
+                    }
+                }
+            });
         } catch (error) {
             console.error('Error fetching posts:', error);
-            res.status(500).json({ error: 'Internal Server Error' });
+
+            const statusCode = error.message.includes('not found') ? 404 : 500;
+
+            res.status(statusCode).json({
+                success: false,
+                error: error.message || 'Failed to fetch posts'
+            });
         }
     },
 
     // Get a single post by ID
     async show(req, res) {
         try {
-            const userData = await User.findUser(req.params.name);
-            const post = await Post.getPostDataById(req.params.id);
-            post.user = {
-                id: post.user_id,
-                name: post.name,
-                avatar: post.avatar,
-                email: post.email
+            const { id } = req.params;
+            const userData = await UserService.getProfile(req.params.name, req.user.userId);
+            const post = await PostService.getPostById(parseInt(id), req.user.userId);
+
+            if (!post) {
+                return res.status(404).render('error', {
+                    title: 'Post Not Found',
+                    message: 'The post you are looking for does not exist.',
+                    user: req.user
+                });
             }
-            if (!post) return res.status(404).json({ error: 'Post not found' });
-            res.render('post/show', { post, user:req.user, userData, userId: req.user.userId, title: "Post" });
+
+            // Format the post data for rendering
+            const formattedPost = {
+                ...post,
+                likes: formatNumberCompact(post.likes || 0),
+                dislikes: formatNumberCompact(post.dislikes || 0),
+                reposts: formatNumberCompact(post.reposts || 0),
+                created_at: formatRelativeTime(post.created_at),
+                user: {
+                    ...post.user,
+                    created_at: formatRelativeTime(post.user.created_at)
+                }
+            };
+
+            res.render('post/show', {
+                post: formattedPost,
+                user: req.user,
+                userData,
+                userId: req.user.userId,
+                title: "Post"
+            });
         } catch (error) {
             console.error('Error fetching post:', error);
-            res.status(500).json({ error: 'Internal Server Error' });
+
+            if (error.message.includes('not found')) {
+                return res.status(404).render('error', {
+                    title: 'Post Not Found',
+                    message: 'The post you are looking for does not exist.',
+                    user: req.user
+                });
+            }
+
+            res.status(500).render('error', {
+                title: 'Server Error',
+                message: 'An error occurred while fetching the post.',
+                user: req.user
+            });
         }
     },
 
     // Update a post
     async update(req, res) {
-    try {
-        let {
-            content,
-            media_url = null,
-            is_draft = false,
-            scheduled_at = null,
-            published_at = null
-        } = req.body;
-        // Convert empty strings to null
-        scheduled_at = scheduled_at?.trim() === '' ? null : scheduled_at;
-        published_at = published_at?.trim() === '' ? null : published_at;
-        
-        // Validate required fields
-        if (!content) {
-            return res.status(400).json({ error: 'Content is required.' });
+        try {
+            const { id } = req.params;
+            const updateData = {
+                ...req.body,
+                media_url: req.file ? req.file.path : req.body.media_url
+            };
+
+            const result = await PostService.updatePost(
+                parseInt(id),
+                updateData,
+                req.user.userId
+            );
+
+            res.json({
+                success: true,
+                data: result,
+                message: "Post updated successfully"
+            });
+        } catch (error) {
+            console.error('Error updating post:', error);
+
+            let statusCode = 500;
+            let errorMessage = 'Internal Server Error';
+
+            if (error.message.includes('not found')) {
+                statusCode = 404;
+                errorMessage = error.message;
+            } else if (error.message.includes('authorized')) {
+                statusCode = 403;
+                errorMessage = error.message;
+            } else if (error.message.includes('validation')) {
+                statusCode = 400;
+                errorMessage = error.message;
+            }
+
+            res.status(statusCode).json({
+                success: false,
+                error: errorMessage
+            });
         }
+    },
 
-        // Ensure data types are accurate
-        is_draft = Boolean(is_draft);
-        media_url = media_url || null;
-
-        // Handle publishing logic
-        const isScheduled = scheduled_at && new Date(scheduled_at) > new Date();
-        if (!is_draft && !isScheduled && !published_at) {
-            published_at = new Date(); // publish immediately if not draft and not scheduled
-        }
-
-        const updatedPost = await Post.updatePost(
-            req.params.id,
-            content,
-            req.user.userId,
-            media_url,
-            null, // parent_post_id (assuming not used in updates)
-            is_draft,
-            scheduled_at,
-            published_at
-        );
-
-        if (!updatedPost) {
-            return res.status(404).json({ error: 'Post not found' });
-        }
-
-        // Add user information to the response
-        updatedPost.user = {
-            name: req.user.username,
-            avatar: req.user.avatar,
-            email: req.user.email,
-            id: req.user.userId
-        };
-
-        res.json({ 
-            updatedPost, 
-            message: "Post updated successfully" 
-        });
-    } catch (error) {
-        console.error('Error updating post:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-},
     // Delete a post
     async destroy(req, res) {
         try {
-            const deletedPost = await Post.deletePost(req.params.id);
-            if (!deletedPost) return res.status(404).json({ error: 'Post not found' });
-            res.json({ message: 'Post deleted successfully.', post: deletedPost });
+            const { id } = req.params;
+
+            const deletedPost = await PostService.deletePost(parseInt(id), req.user.userId);
+
+            res.json({
+                success: true,
+                data: deletedPost,
+                message: 'Post deleted successfully.'
+            });
         } catch (error) {
             console.error('Error deleting post:', error);
-            res.status(500).json({ error: 'Internal Server Error' });
+
+            let statusCode = 500;
+            let errorMessage = 'Internal Server Error';
+
+            if (error.message.includes('not found')) {
+                statusCode = 404;
+                errorMessage = error.message;
+            } else if (error.message.includes('authorized')) {
+                statusCode = 403;
+                errorMessage = error.message;
+            }
+
+            res.status(statusCode).json({
+                success: false,
+                error: errorMessage
+            });
         }
     },
 
-    //Search Post
-
+    // Search posts
     async searchPost(req, res) {
-        const { query } = req.query;
         try {
-            const results = await Post.searchPost(query);
-            results.forEach(post => { // Add formatted date to each post
-                post.published_at = post.published_at ? format(new Date(post.published_at), 'dd-MM-yyyy') : 'Not Published';
-            })
+            const { query, limit = 20, offset = 0 } = req.query;
+
+            const result = await PostService.searchPosts(
+                query,
+                req.user.userId,
+                {
+                    limit: parseInt(limit),
+                    offset: parseInt(offset)
+                }
+            );
+
+            // Format posts for rendering
+            const formattedPosts = result.posts.map(post => ({
+                ...post,
+                likes: formatNumberCompact(post.likes || 0),
+                dislikes: formatNumberCompact(post.dislikes || 0),
+                reposts: formatNumberCompact(post.reposts || 0),
+                created_at: formatRelativeTime(post.created_at),
+                user: {
+                    ...post.user,
+                    created_at: formatRelativeTime(post.user.created_at)
+                }
+            }));
+
             res.render('search_results', {
                 title: 'Search Results',
-                posts: results,
+                posts: formattedPosts,
                 query: query,
-                user: req.user
-            });
-        } catch (err) {
-            console.log(err);
-        }
-    },
-
-    async likePost(req, res) {
-        try {
-            const { postId } = req.params;
-            const userId = req.user.userId; // From JWT
-            const { type } = req.body; // 'like' or 'dislike'
-            if (!['like', 'dislike'].includes(type)) {
-                return res.status(400).json({ error: 'Invalid reaction type' });
-            }
-            
-            const post = await Post.getPostById(postId);
-            const result = await Post.toggleLike(postId, userId, type);
-            const reactions = await Post.getReactions(postId);
-            if(userId !== post.user_id){
-                await Notification.createNotification(post.user_id, userId, type, postId);
-            }
-            res.json({
-                ...result,
-                reactions: { reactions, likes: formatNumberCompact(reactions.likes), dislikes: formatNumberCompact(reactions.dislikes) },
-                userReaction: await Post.getUserReaction(postId, userId)
+                user: req.user,
+                pagination: {
+                    total: result.total,
+                    limit: parseInt(limit),
+                    offset: parseInt(offset),
+                    hasMore: result.hasMore
+                }
             });
         } catch (error) {
-            console.error(error);
-            res.status(500).json({ error: 'Failed to process reaction' });
+            console.error('Error searching posts:', error);
+
+            res.render('search_results', {
+                title: 'Search Results',
+                posts: [],
+                query: req.query.query,
+                user: req.user,
+                error: 'Failed to search posts. Please try again.'
+            });
         }
     },
 
+    // Like/dislike a post
+    async reactPost(req, res) {
+        try {
+            const { postId } = req.params;
+            const { type } = req.body;
+
+            const result = await PostService.toggleLike(
+                parseInt(postId),
+                req.user.userId,
+                type
+            );
+            
+            res.json({
+                success: true,
+                data: {
+                    ...result,
+                    reactions: {
+                        ...result.reactions,
+                        likes: formatNumberCompact(result.reactions.likes || 0),
+                        dislikes: formatNumberCompact(result.reactions.dislikes || 0)
+                    }
+                },
+                message: result.action === 'added' ?
+                    `Post ${type}d successfully` :
+                    result.action === 'removed' ?
+                        'Reaction removed successfully' :
+                        'Reaction updated successfully'
+            });
+        } catch (error) {
+            console.error('Error liking post:', error);
+
+            let statusCode = 500;
+            let errorMessage = 'Failed to process reaction';
+
+            if (error.message.includes('not found')) {
+                statusCode = 404;
+                errorMessage = error.message;
+            } else if (error.message.includes('own post')) {
+                statusCode = 400;
+                errorMessage = error.message;
+            }
+
+            res.status(statusCode).json({
+                success: false,
+                error: errorMessage
+            });
+        }
+    },
+
+    // Repost a post
     async repostPost(req, res) {
         try {
             const { postId } = req.params;
-            const userId = req.user.userId;
 
-            // Verify the post exists first
-            const post = await Post.getPostById(postId);
+            const result = await PostService.toggleRepost(
+                parseInt(postId),
+                req.user.userId
+            );
 
-            if (!post || post.length === 0) {
-                return res.status(404).json({ error: 'Post not found' });
-            }
-
-            const result = await Post.toggleRepost(postId, userId);
-            const repostCount = await Post.getRepostCount(postId);
-            const hasReposted = await Post.hasReposted(postId, userId);
-            if(userId !== post.user_id){
-                await Notification.createNotification(post.user_id, userId, "repost", postId);
-            }
             res.json({
-                ...result,
-                repostCount: formatNumberCompact(repostCount),
-                hasReposted
+                success: true,
+                data: {
+                    ...result,
+                    repostCount: formatNumberCompact(result.repostCount || 0)
+                },
+                message: result.action === 'added' ?
+                    'Post reposted successfully' :
+                    'Repost removed successfully'
             });
         } catch (error) {
-            console.error("Error in repostPost:", error);
-            res.status(500).json({ error: 'Failed to process repost' });
+            console.error('Error reposting post:', error);
+
+            let statusCode = 500;
+            let errorMessage = 'Failed to process repost';
+
+            if (error.message.includes('not found')) {
+                statusCode = 404;
+                errorMessage = error.message;
+            } else if (error.message.includes('own post')) {
+                statusCode = 400;
+                errorMessage = error.message;
+            }
+
+            res.status(statusCode).json({
+                success: false,
+                error: errorMessage
+            });
         }
     },
 
-    // In your postsController.js
+    // Get trending posts
     async getTrendingPosts(req, res) {
         try {
-            const limit = parseInt(req.query.limit) || 10;
-            const timePeriod = req.query.period || '24 HOUR';
+            const { limit = 10, period = '24 HOUR' } = req.query;
 
-            // Get trending posts with optimized query
-            const trendingPosts = await Post.getTrendingPosts(limit, timePeriod);
+            const trendingPosts = await PostService.getTrendingPosts(req.user.userId, {
+                limit: parseInt(limit),
+                period
+            });
 
-            // Get all needed user IDs at once
-            const userIds = [...new Set(trendingPosts.map(post => post.user_id))];
-            const users = await User.findAll({ where: { id: userIds } });
-            const userMap = new Map(users.map(user => [user.id, user]));
-
-            // Get user reactions in bulk if logged in
-            let userReactions = new Map();
-            let userReposts = new Set();
-
-            if (req.user) {
-                const reactions = await PostLike.findAll({
-                    where: {
-                        post_id: trendingPosts.map(post => post.id),
-                        user_id: req.user.id
-                    }
-                });
-                reactions.forEach(r => userReactions.set(r.post_id, r.type));
-
-                const reposts = await PostRepost.findAll({
-                    where: {
-                        post_id: trendingPosts.map(post => post.id),
-                        user_id: req.user.id
-                    }
-                });
-                reposts.forEach(r => userReposts.add(r.post_id));
-            }
-
-            // Build response
-            const response = trendingPosts.map(post => ({
+            // Format the response
+            const formattedPosts = trendingPosts.map(post => ({
                 ...post,
-                user: userMap.get(post.user_id),
-                userReaction: userReactions.get(post.id) || null,
-                hasReposted: userReposts.has(post.id),
-                isFallbackResults: post.is_fallback,
-                created_at: post.created_at
+                likes: formatNumberCompact(post.likes || 0),
+                dislikes: formatNumberCompact(post.dislikes || 0),
+                reposts: formatNumberCompact(post.reposts || 0),
+                created_at: formatRelativeTime(post.created_at),
+                user: {
+                    ...post.user,
+                    created_at: formatRelativeTime(post.user.created_at)
+                },
+                engagement_score: post.engagement_score ? Math.round(post.engagement_score * 100) / 100 : 0
             }));
 
-            res.json(response);
+            res.json({
+                success: true,
+                data: {
+                    posts: formattedPosts,
+                    period,
+                    limit: parseInt(limit),
+                    fallbackUsed: formattedPosts.some(post => post.isFallbackResults)
+                }
+            });
         } catch (error) {
             console.error('Error fetching trending posts:', error);
+
             res.status(500).json({
+                success: false,
                 error: 'Failed to fetch trending posts',
                 details: process.env.NODE_ENV === 'development' ? error.message : undefined
             });
         }
-    }
-}
+    },
 
+    // Get post analytics
+    async getPostAnalytics(req, res) {
+        try {
+            const { id } = req.params;
+
+            const analytics = await PostService.getPostAnalytics(
+                parseInt(id),
+                req.user.userId
+            );
+
+            res.json({
+                success: true,
+                data: analytics
+            });
+        } catch (error) {
+            console.error('Error getting post analytics:', error);
+
+            let statusCode = 500;
+            let errorMessage = 'Failed to get post analytics';
+
+            if (error.message.includes('not found')) {
+                statusCode = 404;
+                errorMessage = error.message;
+            } else if (error.message.includes('authorized')) {
+                statusCode = 403;
+                errorMessage = error.message;
+            }
+
+            res.status(statusCode).json({
+                success: false,
+                error: errorMessage
+            });
+        }
+    }
+};
 
 module.exports = PostsController;

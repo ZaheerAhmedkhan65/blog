@@ -1,3 +1,4 @@
+// js/createPost.js
 document.addEventListener("DOMContentLoaded", () => {
   const postsContainer = document.querySelector(".posts-container");
   
@@ -6,19 +7,24 @@ document.addEventListener("DOMContentLoaded", () => {
     mode: 'create',
     formId: 'create-post-form',
     onSuccess: (responseData) => {
-      const newPost = responseData.post;
+      // Determine the post object (direct or wrapped)
+      const newPost = responseData.post || responseData;
+      // Use the message if present, otherwise a default
+      const message = responseData.message || 'Post created successfully';
+
       const bootstrapModal = bootstrap.Modal.getInstance(document.getElementById('newPostModal'));
       bootstrapModal.hide();
+
       const newPostElement = postTemplate(newPost);
       postsContainer.prepend(newPostElement);
-      notification(responseData.message, "success");
-      // Reset form state
+
+      notification(message, "success");
       resetPostForm();
-      setupReactionButtons();
+      // setupReactionButtons();
     },
     onError: (error) => {
       console.error("Post creation failed:", error);
-      notification("Failed to create post", "error");
+      notification("Failed to create post", "danger");
     }
   });
 

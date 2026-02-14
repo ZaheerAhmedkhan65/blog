@@ -1,4 +1,4 @@
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const CloudinaryStorage = require('multer-storage-cloudinary');
 const cloudinary = require('cloudinary').v2;
 require('dotenv').config();
 
@@ -9,9 +9,9 @@ cloudinary.config({
 });
 
 const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
+  cloudinary,
   params: {
-    folder: 'products', // Folder name in Cloudinary
+    folder: 'post_images',
     allowed_formats: ['jpg', 'png', 'jpeg', 'gif'],
     transformation: [{ width: 500, height: 500, crop: 'limit' }]
   },

@@ -1,16 +1,85 @@
+//postsRoutes.js
 const express = require('express');
 const router = express.Router();
 const PostsController = require('../controllers/postsController');
-const authenticate = require('../middlware/authenticate')
-router.use(authenticate)
+const authenticate = require('../middlware/authenticate');
 
-router.get("/search", PostsController.searchPost)
-router.get('/trending', PostsController.getTrendingPosts);
-router.post('/create', PostsController.create);
-router.get('/users/:id',PostsController.getAllUserPosts);
-router.put('/:id/update', PostsController.update);
-router.delete('/:id/delete', PostsController.destroy);
-router.post('/:postId/like',  PostsController.likePost); // Like/dislike a post
-router.post('/:postId/repost',  PostsController.repostPost); // Repost a post
+// Import validations and rate limiters
+const {
+    createPost: createPostValidation,
+    updatePost: updatePostValidation,
+    postId: postIdValidation,
+    reactPostParamsValidation,
+    reactPostBodyValidation,
+    repostPost: repostPostValidation,
+    searchPosts: searchPostsValidation,
+    getTrendingPosts: getTrendingPostsValidation,
+    getUserPosts: getUserPostsValidation,
+    validate
+} = require('../validations/post.validation');
+
+const {
+    generalLimiter,
+    userActionLimiter,
+    burstLimitMiddleware
+} = require('../middlware/rateLimiter');
+
+router.use(authenticate);
+router.use(burstLimitMiddleware);
+
+router.get("/search",
+    generalLimiter,
+    validate(searchPostsValidation, 'query'),
+    PostsController.searchPost
+);
+
+router.get('/trending',
+    generalLimiter,
+    validate(getTrendingPostsValidation, 'query'),
+    PostsController.getTrendingPosts
+);
+
+router.get('/users/:id',
+    generalLimiter,
+    validate(getUserPostsValidation, 'params'),
+    PostsController.getAllUserPosts
+);
+
+router.post('/create',
+    authenticate,
+    userActionLimiter,
+    validate(createPostValidation),
+    PostsController.create
+);
+
+router.put('/:id/update',
+    authenticate,
+    userActionLimiter,
+    validate(postIdValidation, 'params'),
+    validate(updatePostValidation),
+    PostsController.update
+);
+
+router.delete('/:id/delete',
+    authenticate,
+    userActionLimiter,
+    validate(postIdValidation, 'params'),
+    PostsController.destroy
+);
+
+router.put('/:postId/react',
+    authenticate,
+    userActionLimiter,
+    validate(reactPostParamsValidation, 'params'),
+    validate(reactPostBodyValidation, 'body'),
+    PostsController.reactPost
+);
+
+router.post('/:postId/repost',
+    authenticate,
+    userActionLimiter,
+    validate(repostPostValidation, 'params'),
+    PostsController.repostPost
+);
 
 module.exports = router;

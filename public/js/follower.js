@@ -42,11 +42,12 @@ document.addEventListener("DOMContentLoaded", () => {
         return response.json();
     }
 
-    function displayFollowers(followers) {
-        if (!followers || !Array.isArray(followers)) {
-            throw new Error("Invalid followers data received");
+    function displayFollowers(result) {
+        if (!result.success || !result.data || !Array.isArray(result.data.followers)) {
+            throw new Error('Invalid followers data received');
         }
 
+        const followers = result.data.followers;
         if (followers.length === 0) {
             followersContainer.innerHTML = `
                 <div class="text-center py-5">
@@ -65,19 +66,19 @@ document.addEventListener("DOMContentLoaded", () => {
             followerCard.innerHTML = `
                 <div class="card-body">
                     <div class="d-flex align-items-center">
-                        <img src="${follower.avatar || '/images/default-avatar.png'}" 
-                             alt="${follower.name}" 
+                        <img src="${follower.user.avatar || '/images/default-avatar.png'}" 
+                             alt="${follower.user.name}" 
                              class="rounded-circle me-3" 
                              width="64" 
                              height="64"
                              onerror="this.src='/images/default-avatar.png'">
                         <div class="flex-grow-1">
                             <h5 class="card-title mb-1">
-                                <a href="/${follower.name}" class="text-decoration-none">
-                                    ${follower.name}
+                                <a href="/${follower.user.name}" class="text-decoration-none">
+                                    ${follower.user.name}
                                 </a>
                             </h5>
-                            <p class="text-muted mb-1">@${follower.email.split('@')[0]}</p>
+                            <p class="text-muted mb-1">@${follower.user.email.split('@')[0]}</p>
                             ${follower.bio ? `<p class="card-text mt-2">${follower.bio}</p>` : ''}
                         </div>
                         <p class="text-muted">${follower.followed_at}</p>

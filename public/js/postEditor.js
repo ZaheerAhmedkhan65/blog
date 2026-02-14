@@ -1,14 +1,14 @@
+// public/js/postEditor.js
 class PostEditor {
     constructor(config) {
         // Configuration options
         this.config = {
-            mode: 'create', // or 'edit'
-            formId: 'create-post-form',
+            formId: 'post-form',
             editorId: 'content-editor',
             contentInputId: 'content',
             charCounterId: 'char-counter-circle',
             charCountId: 'char-count',
-            submitBtnId: 'create-post-btn',
+            submitBtnId: 'submit-post-btn',
             spinnerId: 'postSpinner',
             imageInputId: 'imageInput',
             previewId: 'preview',
@@ -51,7 +51,6 @@ class PostEditor {
         const charCountDisplay = document.getElementById(this.config.charCountId);
         const submitBtn = document.getElementById(this.config.submitBtnId);
 
-        // Initialize character counter
         charCountDisplay.textContent = this.MAX_CHARS;
 
         this.editorInputListener = () => {
@@ -59,12 +58,10 @@ class PostEditor {
             const charCount = text.length;
             const remainingChars = this.MAX_CHARS - charCount;
 
-            // Update character counter
             charCountDisplay.textContent = remainingChars;
             const percentage = Math.min(100, (charCount / this.MAX_CHARS) * 100);
             charCounter.style.strokeDashoffset = 100 - percentage;
 
-            // Change counter colors
             if (remainingChars < 0) {
                 charCounter.style.stroke = '#f4212e';
                 charCountDisplay.style.color = '#f4212e';
@@ -76,7 +73,6 @@ class PostEditor {
                 charCountDisplay.style.color = '#1d9bf0';
             }
 
-            // Enable/disable submit button
             if (text.trim().length > 0 && remainingChars >= 0) {
                 submitBtn.disabled = false;
                 submitBtn.style.opacity = 1;
@@ -85,149 +81,127 @@ class PostEditor {
                 submitBtn.style.opacity = 0.5;
             }
 
-            // Style links and handle excess characters
             this.styleContentInEditor(editor, charCount);
-            // Save content to hidden input
             hiddenInput.value = editor.innerHTML;
         };
         editor.addEventListener('input', this.editorInputListener);
     }
- styleContentInEditor(editorElement, charCount) {
-    const remainingChars = this.MAX_CHARS - charCount;
-    const text = editorElement.innerHTML;
 
-    // Temporarily disable input events to prevent recursion
-    editorElement.removeEventListener('input', this.editorInputListener);
+    styleContentInEditor(editorElement, charCount) {
+        const remainingChars = this.MAX_CHARS - charCount;
+        const text = editorElement.innerHTML;
 
-    // Create a temporary div to parse and modify the HTML
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = text;
+        editorElement.removeEventListener('input', this.editorInputListener);
 
-    // First remove any existing excess styling
-    const excessSpans = tempDiv.querySelectorAll('span.excess-text');
-    excessSpans.forEach(span => {
-        const textNode = document.createTextNode(span.textContent);
-        span.parentNode.replaceChild(textNode, span);
-    });
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = text;
 
-    // If we're over limit, style the excess characters
-    if (remainingChars < 0) {
-        const textNodes = [];
+        const excessSpans = tempDiv.querySelectorAll('span.excess-text');
+        excessSpans.forEach(span => {
+            const textNode = document.createTextNode(span.textContent);
+            span.parentNode.replaceChild(textNode, span);
+        });
+
+        if (remainingChars < 0) {
+            const textNodes = [];
+            const walker = document.createTreeWalker(tempDiv, NodeFilter.SHOW_TEXT);
+            let node;
+            while (node = walker.nextNode()) {
+                textNodes.push(node);
+            }
+
+            let charsProcessed = 0;
+            let excessStarted = false;
+
+            textNodes.forEach(textNode => {
+                const textContent = textNode.nodeValue;
+                const parent = textNode.parentNode;
+
+                if (excessStarted) {
+                    const span = document.createElement('span');
+                    span.className = 'excess-text';
+                    span.style.color = '#f4212e';
+                    span.appendChild(document.createTextNode(textContent));
+                    parent.replaceChild(span, textNode);
+                } else {
+                    const allowedLength = this.MAX_CHARS - charsProcessed;
+                    if (allowedLength < textContent.length) {
+                        const allowedText = textContent.substring(0, allowedLength);
+                        const excessText = textContent.substring(allowedLength);
+
+                        parent.insertBefore(document.createTextNode(allowedText), textNode);
+                        const span = document.createElement('span');
+                        span.className = 'excess-text';
+                        span.style.background = '#f4212e';
+                        span.style.color = '#fff';
+                        span.style.opacity = '0.8';
+                        span.appendChild(document.createTextNode(excessText));
+                        parent.insertBefore(span, textNode);
+                        parent.removeChild(textNode);
+
+                        charsProcessed += allowedLength;
+                        excessStarted = true;
+                    } else {
+                        charsProcessed += textContent.length;
+                    }
+                }
+            });
+        }
+
+        const urlRegex = /(https?:\/\/[^\s]+)(?![^<]*<\/span>)/g;
         const walker = document.createTreeWalker(tempDiv, NodeFilter.SHOW_TEXT);
         let node;
+        const textNodes = [];
+
         while (node = walker.nextNode()) {
             textNodes.push(node);
         }
 
-        let charsProcessed = 0;
-        let excessStarted = false;
-
         textNodes.forEach(textNode => {
-            const textContent = textNode.nodeValue;
             const parent = textNode.parentNode;
-
-            if (excessStarted) {
-                // All text after limit is excess
-                const span = document.createElement('span');
-                span.className = 'excess-text';
-                span.style.color = '#f4212e';
-                span.appendChild(document.createTextNode(textContent));
-                parent.replaceChild(span, textNode);
+            if (parent.nodeName === 'SPAN' && (parent.style.color === 'rgb(29, 155, 240)' || parent.classList.contains('excess-text'))) {
+                return;
             }
-            else {
-                const allowedLength = this.MAX_CHARS - charsProcessed;
-                if (allowedLength < textContent.length) {
-                    // This node contains both allowed and excess text
-                    const allowedText = textContent.substring(0, allowedLength);
-                    const excessText = textContent.substring(allowedLength);
 
-                    // Insert allowed text
-                    parent.insertBefore(document.createTextNode(allowedText), textNode);
+            const textContent = textNode.nodeValue;
+            const nodes = [];
+            let lastIndex = 0;
 
-                    // Create span for excess text
-                    const span = document.createElement('span');
-                    span.className = 'excess-text';
-                    span.style.background = '#f4212e';
-                    span.style.color = '#fff';
-                    span.style.opacity = '0.8';
-                    span.appendChild(document.createTextNode(excessText));
-
-                    // Insert excess span
-                    parent.insertBefore(span, textNode);
-                    parent.removeChild(textNode);
-
-                    charsProcessed += allowedLength;
-                    excessStarted = true;
-                } else {
-                    charsProcessed += textContent.length;
+            textContent.replace(urlRegex, (match, offset) => {
+                if (offset > lastIndex) {
+                    nodes.push(document.createTextNode(textContent.substring(lastIndex, offset)));
                 }
-            }
-        });
-    }
-
-    // Process links
-    const urlRegex = /(https?:\/\/[^\s]+)(?![^<]*<\/span>)/g;
-    const walker = document.createTreeWalker(tempDiv, NodeFilter.SHOW_TEXT);
-    let node;
-    const textNodes = [];
-
-    while (node = walker.nextNode()) {
-        textNodes.push(node);
-    }
-
-    textNodes.forEach(textNode => {
-        const parent = textNode.parentNode;
-        if (parent.nodeName === 'SPAN' && (parent.style.color === 'rgb(29, 155, 240)' || parent.classList.contains('excess-text'))) {
-            return; // Skip already styled links or excess text
-        }
-
-        const textContent = textNode.nodeValue;
-        const nodes = [];
-        let lastIndex = 0;
-
-        textContent.replace(urlRegex, (match, offset) => {
-            // Add text before the URL
-            if (offset > lastIndex) {
-                nodes.push(document.createTextNode(textContent.substring(lastIndex, offset)));
-            }
-
-            // Create styled span for URL
-            const span = document.createElement('span');
-            span.style.color = '#1d9bf0';
-            span.appendChild(document.createTextNode(match));
-            nodes.push(span);
-
-            lastIndex = offset + match.length;
-        });
-
-        // Add remaining text after last URL
-        if (lastIndex < textContent.length) {
-            nodes.push(document.createTextNode(textContent.substring(lastIndex)));
-        }
-
-        // Replace the text node with new nodes if URLs were found
-        if (nodes.length > 0) {
-            nodes.forEach(newNode => {
-                parent.insertBefore(newNode, textNode);
+                const span = document.createElement('span');
+                span.style.color = '#1d9bf0';
+                span.appendChild(document.createTextNode(match));
+                nodes.push(span);
+                lastIndex = offset + match.length;
             });
-            parent.removeChild(textNode);
-        }
-    });
 
-    // Update editor content
-    editorElement.innerHTML = tempDiv.innerHTML;
+            if (lastIndex < textContent.length) {
+                nodes.push(document.createTextNode(textContent.substring(lastIndex)));
+            }
 
-    // Restore cursor position
-    const range = document.createRange();
-    range.selectNodeContents(editorElement);
-    range.collapse(false);
-    const selection = window.getSelection();
-    selection.removeAllRanges();
-    selection.addRange(range);
+            if (nodes.length > 0) {
+                nodes.forEach(newNode => {
+                    parent.insertBefore(newNode, textNode);
+                });
+                parent.removeChild(textNode);
+            }
+        });
 
-    // Re-enable input events
-    editorElement.addEventListener('input', this.editorInputListener);
-}
+        editorElement.innerHTML = tempDiv.innerHTML;
+
+        const range = document.createRange();
+        range.selectNodeContents(editorElement);
+        range.collapse(false);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+
+        editorElement.addEventListener('input', this.editorInputListener);
+    }
+
     initImageHandling() {
         const imageInput = document.getElementById(this.config.imageInputId);
         const preview = document.getElementById(this.config.previewId);
@@ -239,7 +213,6 @@ class PostEditor {
         const cancelCropBtn = document.getElementById(this.config.cancelCropBtnId);
         const uploadEditedImageBtn = document.getElementById(this.config.uploadEditedImageBtnId);
 
-        // Image selection
         imageInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
@@ -257,13 +230,11 @@ class PostEditor {
             reader.readAsDataURL(file);
         });
 
-        // Edit image
         editImageBtn.addEventListener('click', () => {
             cropperContainer.style.display = 'block';
             preview.style.display = 'none';
             editImageBtn.style.display = 'none';
             removeImageBtn.style.display = 'none';
-            // Set the cropper image source to the current preview image
             cropperImage.src = preview.src;
             if (this.cropper) this.cropper.destroy();
             this.cropper = new Cropper(cropperImage, {
@@ -274,7 +245,6 @@ class PostEditor {
             });
         });
 
-        // Cancel crop
         cancelCropBtn.addEventListener('click', () => {
             cropperContainer.style.display = 'none';
             preview.style.display = 'block';
@@ -286,7 +256,6 @@ class PostEditor {
             }
         });
 
-        // Save cropped image
         uploadEditedImageBtn.addEventListener('click', async () => {
             if (!this.cropper) return;
 
@@ -298,14 +267,13 @@ class PostEditor {
             cropperContainer.style.display = 'none';
             editImageBtn.style.display = 'block';
             removeImageBtn.style.display = 'block';
-            
+
             if (this.cropper) {
                 this.cropper.destroy();
                 this.cropper = null;
             }
         });
 
-        // Remove image
         removeImageBtn.addEventListener('click', () => {
             preview.src = '';
             preview.style.display = 'none';
@@ -329,7 +297,6 @@ class PostEditor {
         const scheduledDisplay = document.getElementById(this.config.scheduledDisplayId);
         const scheduledTimeText = document.getElementById(this.config.scheduledTimeTextId);
 
-        // Show schedule input
         schedulePostBtn.addEventListener('click', () => {
             scheduleContainer.style.display = 'block';
             schedulePostBtn.style.display = 'none';
@@ -337,12 +304,10 @@ class PostEditor {
             scheduledAtInput.value = '';
         });
 
-        // Enable Confirm only when date is selected
         scheduledAtInput.addEventListener('input', () => {
             confirmScheduleBtn.disabled = !scheduledAtInput.value;
         });
 
-        // Confirm scheduling
         confirmScheduleBtn.addEventListener('click', () => {
             const timeValue = scheduledAtInput.value;
             if (!timeValue) return;
@@ -354,7 +319,6 @@ class PostEditor {
             schedulePostBtn.style.display = 'inline-block';
         });
 
-        // Cancel scheduling
         cancelScheduleBtn.addEventListener('click', () => {
             scheduledAtInput.value = '';
             scheduleContainer.style.display = 'none';
@@ -373,13 +337,24 @@ class PostEditor {
             spinner.classList.remove('d-none');
 
             const formData = new FormData(form);
-            const data = Object.fromEntries(formData.entries());
-            
-            // For edit mode, include the post ID
-            if (this.config.mode === 'edit') {
-                data.id = document.getElementById('edit-post-id').value;
+            const data = {};
+
+            for (let [key, value] of formData.entries()) {
+                if (key === 'is_draft') {
+                    data[key] = value === 'on';
+                } else if (key === 'parent_post_id' && value) {
+                    data[key] = parseInt(value, 10);
+                } else if (key === 'scheduled_at' && value) {
+                    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value)) {
+                        data[key] = value + ':00';
+                    } else {
+                        data[key] = value;
+                    }
+                } else if (value !== '') {
+                    data[key] = value;
+                }
             }
-            
+
             // Upload image first if selected
             if (this.croppedImageBlob || this.selectedImageFile) {
                 const uploadForm = new FormData();
@@ -409,10 +384,10 @@ class PostEditor {
             }
 
             try {
-                const endpoint = this.config.mode === 'create' 
-                    ? "/posts/create" 
-                    : `/posts/${data.id}/update`;
-                const method = this.config.mode === 'create' ? 'POST' : 'PUT';
+                // Determine endpoint and method based on presence of post ID
+                const postId = data.id || document.getElementById('post-id')?.value;
+                const endpoint = postId ? `/posts/${postId}/update` : "/posts/create";
+                const method = postId ? 'PUT' : 'POST';
 
                 const response = await fetch(endpoint, {
                     method,
@@ -422,12 +397,16 @@ class PostEditor {
 
                 if (response.ok) {
                     const responseData = await response.json();
+                    const post = responseData.data || responseData;
+                    console.log("Post saved:", post);
                     if (typeof this.config.onSuccess === 'function') {
-                        this.config.onSuccess(responseData);
+                        this.config.onSuccess(post);
                     }
                 } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    console.error("Server error:", response.status, errorData);
                     if (typeof this.config.onError === 'function') {
-                        this.config.onError('Failed to process post');
+                        this.config.onError(errorData.error || 'Failed to process post');
                     }
                 }
             } catch (error) {
@@ -442,7 +421,6 @@ class PostEditor {
         });
     }
 
-    // Public method to set content (for edit mode)
     setContent(content) {
         const editor = document.getElementById(this.config.editorId);
         const hiddenInput = document.getElementById(this.config.contentInputId);
@@ -451,17 +429,16 @@ class PostEditor {
         this.updateCharCounter(content.length);
     }
 
-    // Public method to set image (for edit mode)
     setImage(url) {
         const preview = document.getElementById(this.config.previewId);
         const editImageBtn = document.getElementById(this.config.editImageBtnId);
         const removeImageBtn = document.getElementById(this.config.removeImageBtnId);
-        const mediaUrlInput = document.getElementById(this.config.mediaUrlId);4
-        const cropperImage = document.getElementById(this.config.cropperImageId); 
+        const mediaUrlInput = document.getElementById(this.config.mediaUrlId);
+        const cropperImage = document.getElementById(this.config.cropperImageId);
 
         if (url) {
             preview.src = url;
-            cropperImage.src = url; // Also set the cropper image source
+            cropperImage.src = url;
             preview.style.display = 'block';
             editImageBtn.style.display = 'block';
             removeImageBtn.style.display = 'block';
@@ -469,7 +446,6 @@ class PostEditor {
         }
     }
 
-    // Public method to set schedule (for edit mode)
     setSchedule(dateString) {
         if (!dateString) return;
 
@@ -484,7 +460,6 @@ class PostEditor {
         scheduledDisplay.style.display = 'block';
     }
 
-    // Helper to update character counter
     updateCharCounter(charCount) {
         const remainingChars = this.MAX_CHARS - charCount;
         const charCountDisplay = document.getElementById(this.config.charCountId);

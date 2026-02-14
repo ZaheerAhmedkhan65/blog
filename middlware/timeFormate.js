@@ -1,4 +1,3 @@
-// Add this helper function (you can put it in a utilities file)
 const formatRelativeTime = (dateString) => {
     const now = new Date();
     const postDate = new Date(dateString);

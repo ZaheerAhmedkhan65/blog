@@ -42,10 +42,14 @@ document.addEventListener("DOMContentLoaded", () => {
         return response.json();
     }
 
-    function displayFollowings(followings) {
-        if (!followings || !Array.isArray(followings)) {
-            throw new Error("Invalid followings data received");
+    function displayFollowings(result) {
+
+        if (!result.success || !result.data || !Array.isArray(result.data.following)) {
+            throw new Error('Invalid followings data received');
         }
+
+        const followings = result.data.following;
+
 
         if (followings.length === 0) {
             followingsContainer.innerHTML = `
@@ -66,20 +70,20 @@ document.addEventListener("DOMContentLoaded", () => {
             followerCard.innerHTML = `
                 <div class="card-body">
                     <div class="d-flex align-items-center">
-                        <img src="${following.avatar || '/images/default-avatar.png'}" 
-                             alt="${following.name}" 
+                        <img src="${following.user.avatar || '/images/default-avatar.png'}" 
+                             alt="${following.user.name}" 
                              class="rounded-circle me-3" 
                              width="64" 
                              height="64"
                              onerror="this.src='/images/default-avatar.png'">
                         <div class="flex-grow-1">
                             <h5 class="card-title mb-1">
-                                <a href="/${following.name}" class="text-decoration-none">
-                                    ${following.name}
+                                <a href="/${following.user.name}" class="text-decoration-none">
+                                    ${following.user.name}
                                 </a>
                             </h5>
-                            <p class="text-muted mb-1">@${following.email.split('@')[0]}</p>
-                            ${following.bio ? `<p class="card-text mt-2">${following.bio}</p>` : ''}
+                            <p class="text-muted mb-1">@${following.user.email.split('@')[0]}</p>
+                            ${following.user.bio ? `<p class="card-text mt-2">${following.user.bio}</p>` : ''}
                         </div>
                         <p class="text-muted">${following.followed_at}</p>
                     </div>

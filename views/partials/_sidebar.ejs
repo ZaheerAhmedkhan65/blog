@@ -1,11 +1,11 @@
-<div class="col-lg-2 col-md-2 col-2 sidebar d-flex flex-column justify-content-between align-items-center align-items-lg-start py-3 px-2 min-vh-100">    
+<div class="col-lg-2 col-md-2 col-2 sidebar d-flex flex-column justify-content-between align-items-center align-items-lg-start py-3 px-2 max-vh-100 min-vh-100 position-sticky top-0">    
     <div>
           <a class="text-decoration-none d-none d-lg-block" href="/">
-            <h3>Blog</h3>
+            <img src="/images/logo/c/blog__480.png" alt="logo" width="100">
           </a>
           <div class="links-container nav flex-column text-center">
               <a class="text-decoration-none d-lg-none d-block" href="/">
-                  <h3>Blog</h3>
+                  <img src="/images/logo/c/logo_480_271.png" alt="logo" width="100">
               </a>
               
               <button type="button" class="nav-link text-center text-lg-start p-0 bg-transparent border-0" data-bs-toggle="modal" data-bs-target="#notificationsModal">
@@ -20,7 +20,7 @@
                 <span class="d-none d-lg-inline"> Settings</span>
               </a>
 
-              <button type="button" class="btn btn-primary my-3 rounded-pill" data-bs-toggle="modal" data-bs-target="#newPostModal">
+              <button type="button" class="btn btn-primary my-3 rounded-pill" data-bs-toggle="modal" data-bs-target="#postModal">
                 Post
               </button>
           </div>
@@ -62,201 +62,20 @@
 </div>
 
   </div>
-  
-  
-  <div class="modal fade" id="newPostModal" tabindex="-1" aria-labelledby="newPostModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header border-0">
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body pt-0">
-                <form id="create-post-form" action="/posts/create" method="POST">
-                    <div class="d-flex">
-                        <!-- User avatar (left side) -->
-                        <div class="flex-shrink-0 me-3">
-                            <img src="<%= user.avatar || '/images/default-avatar.png' %>" alt="User avatar" class="rounded-circle" width="50" height="50">
-                        </div>
-                        
-                        <!-- Post content (right side) -->
-                        <div class="flex-grow-1 overflow-auto" style="max-height: 70vh;">
-                            <div class="form-group mb-3">
-                                <div id="content-editor"
-                                  class="content-editor form-control border-0 fs-5 outline-0 border-0 shadow-none"
-                                  contenteditable="true"
-                                  placeholder="What is happening?"
-                                  focus
-                                  style="min-height: 100px; max-height: 300px; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word; outline: none;"></div>
-                                <input type="hidden" name="content" id="content">
-                            </div>
-                            <div class="position-relative">
-                              <img id="preview" class="img-fluid rounded" style="max-width: 100%; display: none;" />
-                              <!-- Edit button on image -->
-                              <button type="button" id="editImageBtn" class="btn btn-sm btn-warning position-absolute top-0 start-0 m-2" style="display: none;">
-                                Edit
-                              </button>
-                              <!-- Remove button next to Edit -->
-                              <button type="button" id="removeImageBtn" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-2" style="display: none;">
-                                Remove
-                              </button>
-                              <!-- Cropping area (shown on edit only) -->
-                              <div id="cropper-container" style="display: none;">
-                                <img id="cropper-image" style="max-width: 100%;" />
-                                <button type="button" class="btn btn-secondary" id="cancelCropBtn">Cancel</button>
-                                <button type="button" class="btn btn-success mt-2" id="uploadEditedImageBtn">Save</button>
-                              </div>
-                            </div>
-                            <!-- Schedule Time Input Container (Hidden by default) -->
-                            <div id="scheduleContainer" class="mt-2" style="display: none;">
-                              <div class="d-flex align-items-center gap-2">
-                                <input type="datetime-local" id="scheduled_at_input" class="form-control form-control-sm" name="scheduled_at" />
-                                <button type="button" id="confirmScheduleBtn" class="btn btn-sm btn-success" disabled>Confirm</button>
-                                <button type="button" id="cancelScheduleBtn" class="btn btn-sm btn-secondary">Cancel</button>
-                              </div>
-                              <div id="scheduledDisplay" class="text-muted small mt-1" style="display: none;">
-                                <i class="ri-calendar-schedule-line"></i>
-                                Scheduled for: <span id="scheduledTimeText"></span>
-                              </div>
-                            </div>
-                            <!-- Hidden field to hold final image URL -->
-                            <input type="hidden" name="media_url" id="media_url">
-                        </div>
-                    </div>
-                    <div class="d-flex justify-content-between align-items-center">
-                      <div class="d-flex align-items-center gap-2">
-                          <input type="file" name="image" id="imageInput" accept="image/*" style="display: none;">
-                          <label for="imageInput" class="btn btn-sm p-0">
-                              <i id="selectImageBtn" class="bi bi-image fs-5"></i>
-                          </label>
-                          <button id="schedulePostBtn" type="button" class="btn btn-sm p-0">
-                              <i class="ri-calendar-schedule-line fs-5"></i>
-                          </button>
-                          
-                          <input type="checkbox" name="is_draft" id="is_draft" class="form-check-input">
-                          <label for="is_draft" class="form-check-label">Draft</label>
-                      </div>
-                      <div class="d-flex align-items-center gap-3">
-                          <div class="position-relative" style="width: 30px; height: 30px;">
-                              <svg width="30" height="30" viewBox="0 0 36 36" class="text-muted">
-                                  <circle cx="18" cy="18" r="16" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="100" stroke-dashoffset="0"></circle>
-                                  <circle id="char-counter-circle" cx="18" cy="18" r="16" fill="none" stroke="#1d9bf0" stroke-width="2" stroke-dasharray="100" stroke-dashoffset="100" transform="rotate(-90 18 18)"></circle>
-                              </svg>
-                              <span id="char-count" class="position-absolute top-50 start-50 translate-middle small fw-bold" style="color: #1d9bf0;">200</span>
-                          </div>
-                          <button id="create-post-btn" type="submit" class="btn btn-dark rounded-pill px-4" disabled style="opacity: 0.5;">
-                            <span class="spinner-border spinner-border-sm me-2 d-none" id="postSpinner" role="status" aria-hidden="true"></span>
-                               Post
-                          </button>
-                      </div>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-  </div>
-
-  <div class="modal fade" id="editPostModal" tabindex="-1" aria-labelledby="editPostModalLabel" aria-hidden="true">
-      <div class="modal-dialog">
-          <div class="modal-content">
-              <div class="modal-header border-0">
-                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-              </div>
-              <div class="modal-body pt-0">
-                  <form id="edit-post-form">
-                      <input type="hidden" id="edit-post-id" name="id">
-                      <div class="d-flex">
-                          <!-- User avatar (left side) -->
-                          <div class="flex-shrink-0 me-3">
-                              <img src="<%= user.avatar || '/images/default-avatar.png' %>" alt="User avatar" class="rounded-circle" width="50" height="50">
-                          </div>
-                          
-                          <!-- Post content (right side) -->
-                          <div class="flex-grow-1 overflow-auto" style="max-height: 70vh;">
-                              <div class="form-group mb-3">
-                                  <div id="edit-content-editor"
-                                    class="content-editor form-control border-0 fs-5 outline-0 border-0 shadow-none"
-                                    contenteditable="true"
-                                    placeholder="What is happening?"
-                                    style="min-height: 100px; max-height: 300px; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word; outline: none;"></div>
-                                  <input type="hidden" name="content" id="edit-content">
-                              </div>
-                              <div class="position-relative">
-                                <img id="edit-preview" class="img-fluid rounded" style="max-width: 100%; display: none;">
-                                <!-- Edit button on image -->
-                                <button type="button" id="edit-image-btn" class="btn btn-sm btn-warning position-absolute top-0 start-0 m-2" style="display: none;">
-                                  Edit
-                                </button>
-                                <!-- Remove button next to Edit -->
-                                <button type="button" id="edit-remove-image-btn" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-2" style="display: none;">
-                                  Remove
-                                </button>
-                                <!-- Cropping area (shown on edit only) -->
-                                <div id="edit-cropper-container" style="display: none;">
-                                  <img id="edit-cropper-image" style="max-width: 100%;" />
-                                  <button type="button" class="btn btn-secondary" id="edit-cancel-crop-btn">Cancel</button>
-                                  <button type="button" class="btn btn-success mt-2" id="edit-upload-edited-image-btn">Save</button>
-                                </div>
-                              </div>
-                              <!-- Schedule Time Input Container -->
-                              <div id="edit-schedule-container" class="mt-2" style="display: none;">
-                                <div class="d-flex align-items-center gap-2">
-                                  <input type="datetime-local" id="edit-scheduled-at-input" class="form-control form-control-sm" name="scheduled_at" />
-                                  <button type="button" id="edit-confirm-schedule-btn" class="btn btn-sm btn-success" disabled>Confirm</button>
-                                  <button type="button" id="edit-cancel-schedule-btn" class="btn btn-sm btn-secondary">Cancel</button>
-                                </div>
-                                <div id="edit-scheduled-display" class="text-muted small mt-1" style="display: none;">
-                                  <i class="ri-calendar-schedule-line"></i>
-                                  Scheduled for: <span id="edit-scheduled-time-text"></span>
-                                </div>
-                              </div>
-                              <!-- Hidden field to hold final image URL -->
-                              <input type="hidden" name="media_url" id="edit-media-url">
-                          </div>
-                      </div>
-                      <div class="d-flex justify-content-between align-items-center">
-                        <div class="d-flex align-items-center gap-2">
-                            <input type="file" name="image" id="edit-image-input" accept="image/*" style="display: none;">
-                            <label for="edit-image-input" class="btn btn-sm p-0">
-                                <i id="edit-select-image-btn" class="bi bi-image fs-5"></i>
-                            </label>
-                            <button id="edit-schedule-post-btn" type="button" class="btn btn-sm p-0">
-                                <i class="ri-calendar-schedule-line fs-5"></i>
-                            </button>
-                            
-                            <input type="checkbox" name="is_draft" id="edit-is-draft" class="form-check-input">
-                            <label for="edit-is-draft" class="form-check-label">Draft</label>
-                        </div>
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="position-relative" style="width: 30px; height: 30px;">
-                                <svg width="30" height="30" viewBox="0 0 36 36" class="text-muted">
-                                    <circle cx="18" cy="18" r="16" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="100" stroke-dashoffset="0"></circle>
-                                    <circle id="edit-char-counter-circle" cx="18" cy="18" r="16" fill="none" stroke="#1d9bf0" stroke-width="2" stroke-dasharray="100" stroke-dashoffset="100" transform="rotate(-90 18 18)"></circle>
-                                </svg>
-                                <span id="edit-char-count" class="position-absolute top-50 start-50 translate-middle small fw-bold" style="color: #1d9bf0;">200</span>
-                            </div>
-                            <button id="edit-post-btn" type="submit" class="btn btn-dark rounded-pill px-4" style="opacity: 0.5;" disabled>
-                              <span class="spinner-border spinner-border-sm me-2 d-none" id="edit-post-spinner" role="status" aria-hidden="true"></span>
-                              Update
-                            </button>
-                        </div>
-                      </div>
-                  </form>
-              </div>
-          </div>
-      </div>
-  </div>
 
 <%- include('_following') %>
 <%- include('_followers') %>
 <%- include('_notifications') %>
+<%- include('_postModal') %>
 
 <script src="/js/utils.js"></script>
 <script src="/js/postTemplate.js"></script>
 <script src="/js/postEditor.js"></script>
-<script src="/js/createPost.js"></script>
+<script src="/js/postInteractions.js"></script>
+<!-- <script src="/js/createPost.js"></script>
 <script src="/js/editPost.js"></script>
 <script src="/js/deletePost.js"></script>
-<script src="/js/setupPostReactionBtn.js"></script>
+<script src="/js/setupPostReactionBtn.js"></script> -->
 <script src="https://unpkg.com/cropperjs"></script>
 <!-- Cropper.js CSS (REQUIRED) -->
 <link  href="https://unpkg.com/cropperjs@1.5.13/dist/cropper.min.css" rel="stylesheet" />

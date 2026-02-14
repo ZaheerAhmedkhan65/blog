@@ -1,158 +1,296 @@
-const Post = require('../models/Post');
-const User = require('../models/User');
-const Follower = require('../models/Follower');
-const Notification = require('../models/Notification');
-const {formateDate, formatRelativeTime, formatNumberCompact} = require('../middlware/timeFormate');
-
+//controllers/userController.js
+const UserService = require('../services/user.service');
+const PostService = require('../services/post.service');
+const FollowerService = require('../services/follower.service');
+const NotificationService = require('../services/notification.service');
+const MediaService = require('../services/media.service');
+const { formateDate, formatRelativeTime, formatNumberCompact } = require('../middlware/timeFormate');
 
 const userController = {
-    // Create a new post
+    // Get user profile
     async profile(req, res) {
-    try {
-        let userData = await User.findUser(req.params.name);
-        if(!userData && req.user) {  // Also check if req.user exists
-            userData = await User.findUser(req.user.name);
-        }
+        try {
+            const { name } = req.params;
+            const currentUserId = req.user?.userId || null;
 
-        // If still no user data found
-        if(!userData) {
-            return res.status(404).render('error', { 
-                message: 'User not found',
-                title: 'User Not Found'
+            const userData = await UserService.getProfile(name, currentUserId);
+
+            userData.created_at = formateDate(userData.created_at);
+
+            res.status(200).render("user/profile", {
+                user: req.user,
+                userData,
+                title: "Profile",
+                userId: req.user?.userId || null
+            });
+        } catch (error) {
+            console.error('Error getting user profile:', error);
+            res.status(404).render('error', {
+                message: error.message || 'User not found',
+                title: 'User Not Found',
+                user: req.user
             });
         }
-
-        userData.created_at = formateDate(userData.created_at);
-        const posts = await Post.getPostsCountByUser(userData.id);
-        const followers = await Follower.getFollowersCountByUserId(userData.id);
-        const following = await Follower.getFollowingsCountByUserId(userData.id);
-        
-        userData.posts = formatNumberCompact(posts);
-        userData.followers_count = formatNumberCompact(followers);
-        userData.following_count = formatNumberCompact(following);
-        
-        res.status(200).render("user/profile", { 
-            user: req.user,
-            userData, 
-            title: "profile",
-            userId: req.user ? req.user.userId : null 
-        });
-    } catch (error) {
-        console.error('Error getting user profile data:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-},
-
-    async updateProfile(req,res) {
-        try {
-            const avatar = req.file.path;
-            const avatar_public_id = req.file.filename;
-            const updatedUser = await User.updateAvatar(req.params.id, avatar, avatar_public_id);
-            res.json({ updatedUser, message: "User updated successfully" });
-        } catch (error) {
-            console.error('Error updating user:', error);
-            res.status(500).json({ error: 'Internal Server Error' });
-        }
     },
 
-    async suggestedUser(req, res) {
+    // Update profile (avatar)
+    async updateProfile(req, res) {
         try {
-            const currentUserId = req.user.userId; // Assuming you have user in request from auth middleware
-            const suggestedUsers = await User.getSuggestedUsers(currentUserId);
-            
-            // Add isFollowing flag for frontend
-            const usersWithFollowingStatus = suggestedUsers.map(user => ({
-                ...user,
-                isFollowing: false
-            }));
+            const { id } = req.params;
+            const userId = req.user.userId;
 
-            res.json(usersWithFollowingStatus);
-        } catch (error) {
-            console.error('Error getting suggested users:', error);
-            res.status(500).json({ error: 'Internal Server Error' });
-        }
-    },
-
-    async followUser(req, res) {
-        try {
-            const followerId = req.user.userId;
-            const followingId = req.params.id;
-            
-            const isFollowing = await Follower.getFollowersByUserIdAndFollowerId(followerId, followingId);
-            
-            if (isFollowing.length > 0) {
-                return res.status(400).json({ error: 'You are already following this user' });
+            // Verify user owns this profile
+            if (parseInt(id) !== userId) {
+                return res.status(403).json({ error: 'Not authorized to update this profile' });
             }
 
-            const follow = await Follower.createFollower(followerId, followingId);
-            await Notification.createNotification(followingId, followerId, 'follow');
-            
-            res.json({ follow, message: "User followed successfully" });
+            if (!req.file) {
+                return res.status(400).json({ error: 'No image provided' });
+            }
+
+            // Upload avatar using MediaService
+            const uploadResult = await MediaService.uploadImage(req.file, {
+                type: 'avatar',
+                folder: 'avatars'
+            });
+
+            // Update user with new avatar
+            const updatedUser = await UserService.updateAvatar(userId, {
+                avatar: uploadResult.url,
+                avatar_public_id: uploadResult.public_id
+            });
+
+            res.json({
+                user: updatedUser,
+                message: "Profile updated successfully"
+            });
+        } catch (error) {
+            console.error('Error updating profile:', error);
+            res.status(500).json({ error: error.message });
+        }
+    },
+
+    // Get suggested users
+    async suggestedUser(req, res) {
+        try {
+            const currentUserId = req.user.userId;
+            const suggestedUsers = await UserService.getSuggestedUsers(currentUserId);
+
+            res.json(suggestedUsers);
+        } catch (error) {
+            console.error('Error getting suggested users:', error);
+            res.status(500).json({ error: error.message });
+        }
+    },
+
+    // Follow user
+    async followUser(req, res) {
+        try {
+            const followingId = parseInt(req.params.id);
+            const followerId = req.user.userId;
+
+            const result = await FollowerService.followUser(followerId, followingId);
+
+            res.json(result);
         } catch (error) {
             console.error('Error following user:', error);
-            res.status(500).json({ error: 'Internal Server Error' });
+            res.status(500).json({ error: error.message });
         }
     },
 
+    // Unfollow user
     async unfollowUser(req, res) {
-    try {
-        const followerId = req.user.userId;
-        const followingId = req.params.id;
+        try {
+            const followingId = parseInt(req.params.id);
+            const followerId = req.user.userId;
 
-        const isFollowing = await Follower.getFollowersByUserIdAndFollowerId(followerId, followingId);
-        if (isFollowing.length === 0) {
-            return res.status(400).json({ error: 'You are not following this user' });
+            const result = await FollowerService.unfollowUser(followerId, followingId);
+
+            res.json(result);
+        } catch (error) {
+            console.error('Error unfollowing user:', error);
+            res.status(500).json({ error: error.message });
         }
+    },
 
-        const unfollow = await Follower.deleteFollower(followerId, followingId);
-        res.json({ unfollow, message: "User unfollowed successfully" });
-    } catch (error) {
-        console.error('Error unfollowing user:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-},
-
+    // Get followers list
     async followers(req, res) {
         try {
-            let following = await Follower.getFollowersByUserId(req.params.id);
-            following = following.map(following => ({
-                ...following,
-                followed_at: formatRelativeTime(following.followed_at)
-            }))
-            res.json(following);
-        } catch (error) {
-            console.error('Error getting follows:', error);
-            res.status(500).json({ error: 'Internal Server Error' });
-        }
-    },
+            const userId = parseInt(req.params.id);
+            const { limit = 20, offset = 0 } = req.query;
 
-    async following(req, res) {
-        try {
-            let followings = await Follower.getFollowingsByUserId(req.params.id);
-            followings = followings.map(follower => ({
+            const result = await FollowerService.getFollowers(userId, { limit, offset });
+            // Format timestamps
+            result.followers = result.followers.map(follower => ({
                 ...follower,
-                followed_at: formateDate(follower.followed_at)
-            }))
-            res.json(followings);
+                followed_at: formatRelativeTime(follower.created_at)
+            }));
+
+            res.json({
+                success: true,
+                data: {
+                    followers: result.followers,
+                    pagination: {
+                        total: result.total,
+                        limit: parseInt(limit),
+                        offset: parseInt(offset),
+                        hasMore: result.hasMore
+                    }
+                }
+            });
         } catch (error) {
             console.error('Error getting followers:', error);
-            res.status(500).json({ error: 'Internal Server Error' });
+            res.status(500).json({ error: error.message });
         }
     },
 
-    async notifications(req, res) {
+    // Get following list
+    async following(req, res) {
         try {
-            let notifications = await Notification.getNotificationsByUserId(req.params.id);
-            notifications = notifications.map(notification => ({
-                ...notification,
-                created_at: formatRelativeTime(notification.created_at)
-            }))
-            res.json(notifications);
+            const userId = parseInt(req.params.id);
+            const { limit = 20, offset = 0 } = req.query;
+
+            const result = await FollowerService.getFollowing(userId, { limit, offset });
+            // Format timestamps
+            result.following = result.following.map(follow => ({
+                ...follow,
+                followed_at: formatRelativeTime(follow.created_at)
+            }));
+
+            res.json({
+                success: true,
+                data: {
+                    following: result.following,
+                    pagination: {
+                        total: result.total,
+                        limit: parseInt(limit),
+                        offset: parseInt(offset),
+                        hasMore: result.hasMore
+                    }
+                }
+            });
         } catch (error) {
-            console.error('Error getting notifications:', error);
-            res.status(500).json({ error: 'Internal Server Error' });
+            console.error('Error getting following:', error);
+            res.status(500).json({ error: error.message });
         }
     },
-}
+
+    // Get notifications
+    async notifications(req, res) {
+        try {
+            const userId = parseInt(req.params.id);
+            const currentUserId = req.user.userId;
+
+            // Verify user owns these notifications
+            if (userId !== currentUserId) {
+                return res.status(403).json({ error: 'Not authorized to view these notifications' });
+            }
+
+            const {
+                limit = 20,
+                offset = 0,
+                unreadOnly = false,
+                markAsRead = false
+            } = req.query;
+
+            const result = await UserService.getNotifications(userId, {
+                limit: parseInt(limit),
+                offset: parseInt(offset),
+                unreadOnly: unreadOnly === 'true',
+                markAsRead: markAsRead === 'true'
+            });
+
+            // Format timestamps
+            result.notifications = result.notifications.map(notification => ({
+                ...notification,
+                created_at: formatRelativeTime(notification.created_at)
+            }));
+
+            res.json(result);
+        } catch (error) {
+            console.error('Error getting notifications:', error);
+            res.status(500).json({ error: error.message });
+        }
+    },
+
+    async updateProfileDetails(req, res) {
+        try {
+            const { id } = req.params;
+            const userId = req.user.userId;
+
+            // Verify user owns this profile
+            if (parseInt(id) !== userId) {
+                return res.status(403).json({ error: 'Not authorized to update this profile' });
+            }
+
+            const { name, bio, website, location } = req.body;
+
+            const updatedUser = await UserService.updateProfile(userId, {
+                name,
+                bio,
+                website,
+                location
+            });
+
+            res.json({
+                user: updatedUser,
+                message: "Profile updated successfully"
+            });
+        } catch (error) {
+            console.error('Error updating profile details:', error);
+            res.status(500).json({ error: error.message });
+        }
+    },
+
+    // Get user statistics
+    async getUserStats(req, res) {
+        try {
+            const { id } = req.params;
+            const userId = req.user.userId;
+
+            // Verify user can view these stats
+            if (parseInt(id) !== userId) {
+                return res.status(403).json({ error: 'Not authorized to view these statistics' });
+            }
+
+            const stats = await UserService.getUserStats(userId);
+
+            res.json({
+                success: true,
+                data: stats
+            });
+        } catch (error) {
+            console.error('Error getting user stats:', error);
+            res.status(500).json({ error: error.message });
+        }
+    },
+
+    // Search users
+    async searchUsers(req, res) {
+        try {
+            const { q, limit = 20, offset = 0 } = req.query;
+            const currentUserId = req.user.userId;
+
+            const result = await UserService.searchUsers(q, currentUserId, parseInt(limit), parseInt(offset));
+
+            res.json({
+                success: true,
+                data: {
+                    users: result.users,
+                    pagination: {
+                        total: result.total,
+                        limit: parseInt(limit),
+                        offset: parseInt(offset),
+                        hasMore: result.hasMore
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Error searching users:', error);
+            res.status(500).json({ error: error.message });
+        }
+    }
+
+};
 
 module.exports = userController;

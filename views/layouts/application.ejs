@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" href="/images/favicon.ico" type="image/x-icon">
+    <script src="/js/bootstrap.min.js"></script>
+    <title><%= title %></title>
+</head>
+<body>
+    <%- include('../partials/_header') %>
+        <div class="row gx-0">
+            <% if(user) { %>
+            <!-- Left Sidebar -->
+            <%- include('../partials/_sidebar') %>
+            
+            <!-- Main Content -->
+            <div class="col-lg-7 col-md-10 col-10 main-feed py-3">
+            <% } %>
+                <%- body %>
+            <% if(user) { %>
+            </div>
+            <!-- Suggested Column -->
+            <%- include('../partials/_suggested') %>
+            <% } %>
+        </div>
+    <%- include('../partials/_footer') %>
+    </div>
+</body>
+</html>

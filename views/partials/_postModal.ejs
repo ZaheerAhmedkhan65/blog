@@ -1,0 +1,97 @@
+<!-- views/partials/_postModal.ejs -->
+<div class="modal fade" id="postModal" tabindex="-1" aria-labelledby="postModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body pt-0">
+                <form id="post-form">
+                    <input type="hidden" id="post-id" name="id">
+                    <div class="d-flex">
+                        <!-- User avatar (left side) -->
+                        <div class="flex-shrink-0 me-3">
+                            <img src="<%= user.avatar || '/images/default-avatar.png' %>" alt="User avatar"
+                                class="rounded-circle" width="50" height="50">
+                        </div>
+
+                        <!-- Post content (right side) -->
+                        <div class="flex-grow-1 overflow-auto" style="max-height: 70vh;">
+                            <div class="form-group mb-3">
+                                <div id="content-editor"
+                                    class="content-editor form-control border-0 fs-5 outline-0 border-0 shadow-none"
+                                    contenteditable="true" placeholder="What is happening?"
+                                    style="min-height: 100px; max-height: 300px; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word; outline: none;">
+                                </div>
+                                <input type="hidden" name="content" id="content">
+                            </div>
+                            <div class="position-relative">
+                                <img id="preview" class="img-fluid rounded" style="max-width: 100%; display: none;" />
+                                <button type="button" id="editImageBtn"
+                                    class="btn btn-sm btn-warning position-absolute top-0 start-0 m-2"
+                                    style="display: none;">Edit</button>
+                                <button type="button" id="removeImageBtn"
+                                    class="btn btn-sm btn-danger position-absolute top-0 end-0 m-2"
+                                    style="display: none;">Remove</button>
+                                <div id="cropper-container" style="display: none;">
+                                    <img id="cropper-image" style="max-width: 100%;" />
+                                    <button type="button" class="btn btn-secondary" id="cancelCropBtn">Cancel</button>
+                                    <button type="button" class="btn btn-success mt-2"
+                                        id="uploadEditedImageBtn">Save</button>
+                                </div>
+                            </div>
+                            <div id="scheduleContainer" class="mt-2" style="display: none;">
+                                <div class="d-flex align-items-center gap-2">
+                                    <input type="datetime-local" id="scheduled_at_input"
+                                        class="form-control form-control-sm" name="scheduled_at" />
+                                    <button type="button" id="confirmScheduleBtn" class="btn btn-sm btn-success"
+                                        disabled>Confirm</button>
+                                    <button type="button" id="cancelScheduleBtn"
+                                        class="btn btn-sm btn-secondary">Cancel</button>
+                                </div>
+                                <div id="scheduledDisplay" class="text-muted small mt-1" style="display: none;">
+                                    <i class="ri-calendar-schedule-line"></i> Scheduled for: <span
+                                        id="scheduledTimeText"></span>
+                                </div>
+                            </div>
+                            <input type="hidden" name="media_url" id="media_url">
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-2">
+                            <input type="file" name="image" id="imageInput" accept="image/*" style="display: none;">
+                            <label for="imageInput" class="btn btn-sm p-0">
+                                <i class="bi bi-image fs-5"></i>
+                            </label>
+                            <button id="schedulePostBtn" type="button" class="btn btn-sm p-0">
+                                <i class="ri-calendar-schedule-line fs-5"></i>
+                            </button>
+                            <input type="checkbox" name="is_draft" id="is_draft" class="form-check-input">
+                            <label for="is_draft" class="form-check-label">Draft</label>
+                        </div>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="position-relative" style="width: 30px; height: 30px;">
+                                <svg width="30" height="30" viewBox="0 0 36 36" class="text-muted">
+                                    <circle cx="18" cy="18" r="16" fill="none" stroke="currentColor" stroke-width="2"
+                                        stroke-dasharray="100" stroke-dashoffset="0"></circle>
+                                    <circle id="char-counter-circle" cx="18" cy="18" r="16" fill="none" stroke="#1d9bf0"
+                                        stroke-width="2" stroke-dasharray="100" stroke-dashoffset="100"
+                                        transform="rotate(-90 18 18)"></circle>
+                                </svg>
+                                <span id="char-count"
+                                    class="position-absolute top-50 start-50 translate-middle small fw-bold"
+                                    style="color: #1d9bf0;">200</span>
+                            </div>
+                            <button id="submit-post-btn" type="submit" class="btn btn-dark rounded-pill px-4" disabled
+                                style="opacity: 0.5;">
+                                <span class="spinner-border spinner-border-sm me-2 d-none" id="postSpinner"
+                                    role="status" aria-hidden="true"></span>
+                                <span id="submit-btn-text">Post</span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

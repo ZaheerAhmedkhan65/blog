@@ -1,4 +1,9 @@
+// js/postTemplate.js
 function postTemplate(post) {
+  if (!post || typeof post !== 'object' || !post.id) {
+    console.warn('Invalid post object passed to postTemplate', post);
+    return document.createElement('div');
+  }
   if (!post.published_at && post.user.id != userId) {
     return document.createElement('div');
   }

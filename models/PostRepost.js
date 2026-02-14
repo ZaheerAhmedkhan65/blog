@@ -1,4 +1,4 @@
-const db = require('../config/connection'); // adjust this based on your database file
+const db = require('../config/db'); // adjust this based on your database file
 
 class PostRepost {
   static async findAll({ where }) {

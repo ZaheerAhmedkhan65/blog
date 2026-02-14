@@ -1,223 +1,171 @@
-const bcrypt = require('bcryptjs');
-const User = require('../models/User');
-const crypto = require('crypto');
-const jwt = require('jsonwebtoken');
-const nodemailer = require('nodemailer');
+//authController.js
+const AuthService = require('../services/auth.service');
 
-// Configure email transporter (add this at the top)
-const transporter = nodemailer.createTransport({
-    service: 'gmail', // or your email service
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-    }
-});
+const authController = {
+    signup: async (req, res) => {
+        try {
+            const { name, email, password } = req.body;
+            let imagePath = null;
+            let filename = null;
 
+            if (req.file) {
+                imagePath = req.file.path;
+                filename = req.file.filename;
+            }
 
-const signup = async (req, res) => {
-    const { name,email, password } = req.body;
-    let imagePath = null;
-    let filename = null;
-    
-    // Check if user already exists
-    const existingUser = await User.findUser(name);
-    if (existingUser) {
-        return res.status(400).json({ message: 'User already exists' });
-    }
+            const result = await AuthService.signup({
+                name,
+                email,
+                password,
+                imagePath,
+                filename
+            });
 
-    // Hash the password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    if (req.file) {
-        imagePath = req.file.path;
-        filename = req.file.filename;
-    }
-
-    // Create the user
-    await User.createUser(name, email,hashedPassword, imagePath, filename);
-
-    res.status(201).redirect('/auth/signin');
-}
-const login = async (req, res) => {
-    const { name, password } = req.body;
-    // Find the user
-    const user = await User.findUser(name);
-    if (!user) {
-        return res.status(400).json({ message: 'Invalid credentials' });
-    }
-
-    // Compare passwords
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-        return res.status(400).json({ message: 'Invalid credentials' });
-    }
-     // Store user in session
-            const token = jwt.sign(
-                { 
-                    userId: user.id, 
-                    username: user.name,
-                    email: user.email,
-                    avatar: user.avatar
-                }, 
-                process.env.JWT_SECRET , 
-                { expiresIn: '7d' }
-            );
-            
-            // Set the token in a cookie
-            res.cookie('token', token, { 
-                httpOnly: true, 
+            // Set token in cookie
+            res.cookie('token', result.token, {
+                httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
                 sameSite: 'strict',
-                maxAge: 7 * 24 * 60 * 60 * 1000 
+                maxAge: 7 * 24 * 60 * 60 * 1000
             });
- 
-    res.redirect('/');
-}
-const logout = (req, res) => {
-    res.clearCookie('token');
-    res.redirect('/auth/signin');
-}
-const forgotPassword = async (req, res) => {
-    const { email } = req.body;
-    
-    try {
-        const user = await User.findByEmail(email);
-        if (!user) {
-            return res.status(400).render('forgot-password', { 
-                error: 'No account with that email exists.' 
+
+            res.status(201).redirect('/auth/signin');
+        } catch (error) {
+            console.error('Signup error:', error);
+            res.status(400).render('auth/signup', {
+                title: "Sign up",
+                user: null,
+                error: error.message
             });
         }
+    },
 
-        const resetToken = crypto.randomBytes(32).toString('hex');
-        // Create a Date object and format it for MySQL
-        const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour from now
-        
-        await User.updateUser(user.id, { 
-            resetToken,
-            resetTokenExpiry: resetTokenExpiry.toISOString().slice(0, 19).replace('T', ' ')
-            // Formats to: "YYYY-MM-DD HH:MM:SS"
-        });
+    login: async (req, res) => {
+        try {
+            const { name, password } = req.body;
 
-        // Send email with reset link
-        const resetUrl = `https://${req.headers.host}/auth/reset-password/${resetToken}`;
-        
-        await transporter.sendMail({
-            to: user.email,
-            from: process.env.EMAIL_USER,
-            subject: 'Password Reset',
-            html: `
-                <p>You requested a password reset for your BlogPosts account.</p>
-                <p>Click this link to reset your password:</p>
-                <a href="${resetUrl}">${resetUrl}</a>
-                <p>This link will expire in 1 hour.</p>
-                <p>If you didn't request this, please ignore this email.</p>
-            `
-        });
+            const result = await AuthService.login({ name, password });
 
-        res.render('forgot-password', { 
-            title: 'Forgot Password',
-            user: req.session.user || null,
-            message: 'Password reset email sent. Check your inbox.' 
-        });
-    } catch (error) {
-        console.error(error);
-        res.render('forgot-password', { 
-            title: 'Forgot Password',
-            user: req.session.user || null,
-            error: 'Error sending reset email. Please try again.' 
-        });
-    }
-};
+            // Set token in cookie
+            res.cookie('token', result.token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'strict',
+                maxAge: 7 * 24 * 60 * 60 * 1000
+            });
 
-const refreshToken = async (req, res) => {
-    const token = req.cookies.token;
-    if (!token) {
-        return res.status(401).json({ message: 'No token provided' });
-    }
-
-    try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET, { ignoreExpiration: true });
-        
-        // Verify user still exists
-        const user = await User.findById(decoded.userId);
-        if (!user) {
-            return res.status(401).json({ message: 'User no longer exists' });
+            res.redirect('/');
+        } catch (error) {
+            console.error('Login error:', error);
+            res.status(400).render('auth/signin', {
+                title: "Sign in",
+                user: null,
+                error: error.message
+            });
         }
-        
-        // Issue a new token with renewed expiration
-        const newToken = jwt.sign(
-            { 
-                userId: user.id, 
-                username: user.name,
-                email: user.email,
-                avatar: user.avatar
-            }, 
-            process.env.JWT_SECRET, 
-            { expiresIn: '7d' }
-        );;
-        res.cookie('token', newToken, { 
-            httpOnly: true, 
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 7 * 24 * 60 * 60 * 1000 
-        });
-        res.json({ success: true });
-    } catch (err) {
-        return res.status(401).json({ message: 'Invalid token' });
-    }
-}
+    },
 
-const resetPassword = async (req, res) => {
-    const { token } = req.params;
-    
-    try {
-        // Find user by token and check expiry
-        const user = await User.findByResetToken(token);
-        
-        if (user && user.resetTokenExpiry < Date.now()) {
-            res.render('reset-password', { 
+    logout: (req, res) => {
+        try {
+            const token = req.cookies.token;
+            const userId = req.user?.userId;
+
+            // You could add token to blacklist here if needed
+            // await AuthService.logout(userId, token);
+
+            res.clearCookie('token');
+            res.redirect('/auth/signin');
+        } catch (error) {
+            console.error('Logout error:', error);
+            res.redirect('/');
+        }
+    },
+
+    forgotPassword: async (req, res) => {
+        try {
+            const { email } = req.body;
+
+            const result = await AuthService.forgotPassword(email);
+
+            res.render('auth/forgot-password', {
+                title: 'Forgot Password',
+                user: null,
+                message: result.message
+            });
+        } catch (error) {
+            console.error('Forgot password error:', error);
+            res.render('auth/forgot-password', {
+                title: 'Forgot Password',
+                user: null,
+                error: error.message
+            });
+        }
+    },
+
+    refreshToken: async (req, res) => {
+        try {
+            const token = req.cookies.token;
+            if (!token) {
+                return res.status(401).json({ message: 'No token provided' });
+            }
+
+            const result = await AuthService.refreshToken(token);
+
+            // Set new token in cookie
+            res.cookie('token', result.token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'strict',
+                maxAge: 7 * 24 * 60 * 60 * 1000
+            });
+
+            res.json({ success: true, user: result.user });
+        } catch (error) {
+            return res.status(401).json({ message: error.message });
+        }
+    },
+
+    resetPassword: async (req, res) => {
+        try {
+            const { token } = req.params;
+
+            // Verify token is valid
+            // You might want to add a service method to verify reset token
+            // For now, just render the reset form
+
+            res.render('auth/reset-password', {
                 title: 'Reset Password',
-                user: req.session.user || null,
+                user: null,
                 token,
                 valid: true
             });
-        }else{
-            res.redirect("/auth/signup")
+        } catch (error) {
+            console.error('Reset password error:', error);
+            res.redirect("/auth/signup");
         }
-    } catch (error) {
-        console.error(error);
-        res.redirect("/auth/signup")
+    },
+
+    updatePassword: async (req, res) => {
+        try {
+            const { token, password } = req.body;
+
+            const result = await AuthService.resetPassword(token, password);
+
+            res.render('auth/signin', {
+                title: 'Sign In',
+                user: null,
+                message: result.message
+            });
+        } catch (error) {
+            console.error('Update password error:', error);
+            res.render('auth/reset-password', {
+                title: 'Reset Password',
+                user: null,
+                token: req.body.token,
+                error: error.message
+            });
+        }
     }
 };
-const updatePassword = async (req, res) => {
-    const { token, password } = req.body;
-    
-    try {
-        // Find user by token and check expiry
-        const user = await User.findByResetToken(token);
-        
-        if (!user) {
-            return res.redirect("/auth/signup");
-        }
 
-        // Hash new password
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        // Update password and clear reset token
-        await User.updateUserPassword(user.id, { 
-            password: hashedPassword,
-            resetToken: null,
-            resetTokenExpiry: null
-        });
-
-        res.render('signin', { 
-            title: 'Sign In',
-            user: req.session.user || null,
-            message: 'Password updated successfully. Please sign in.' 
-        });
-    } catch (error) {
-        console.error(error);
-        res.redirect("/auth/signup");
-    }
-};
-module.exports = { signup, login, logout, forgotPassword, resetPassword, updatePassword, refreshToken };
+module.exports = authController;

@@ -1,2 +1,7 @@
 node_modules
+database_schema
+todo.log
 .env
+.env.test
+.env.production
+.DS_Store

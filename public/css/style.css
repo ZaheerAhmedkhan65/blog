@@ -1,12 +1,16 @@
+html{
+    scrollbar-width: thin;
+}
+
 body{
     max-height:100vh;
     height: 100%;
 }
 
 .main-feed{
-    height: 100vh;
     overflow-y: auto;
 }
+
 .notification {
     position: fixed;
     top: 10px;
@@ -26,14 +30,11 @@ body{
     right: 10px;
 }
 
-
-
 .notification.error {
     background-color: #f8d7da;
     color: #721c24;
     right: 10px;
 }
-
 
 .content-editor {
   white-space: pre-wrap;
