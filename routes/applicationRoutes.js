@@ -6,6 +6,7 @@ const authenticate = require('../middlware/authenticate');
 const publicRoutes = ['auth'];
 
 const routeMounts = {
+    index: '/',
     user: '/',
     follower: '/users',
 };
