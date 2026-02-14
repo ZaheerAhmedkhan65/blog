@@ -9,7 +9,8 @@ const {
     createPost: createPostValidation,
     updatePost: updatePostValidation,
     postId: postIdValidation,
-    likePost: likePostValidation,
+    reactPostParamsValidation,
+    reactPostBodyValidation,
     repostPost: repostPostValidation,
     searchPosts: searchPostsValidation,
     getTrendingPosts: getTrendingPostsValidation,
@@ -38,19 +39,21 @@ router.get('/trending',
     PostsController.getTrendingPosts
 );
 
-router.post('/create',
-    userActionLimiter,
-    validate(createPostValidation),
-    PostsController.create
-);
-
 router.get('/users/:id',
     generalLimiter,
     validate(getUserPostsValidation, 'params'),
     PostsController.getAllUserPosts
 );
 
+router.post('/create',
+    authenticate,
+    userActionLimiter,
+    validate(createPostValidation),
+    PostsController.create
+);
+
 router.put('/:id/update',
+    authenticate,
     userActionLimiter,
     validate(postIdValidation, 'params'),
     validate(updatePostValidation),
@@ -58,19 +61,22 @@ router.put('/:id/update',
 );
 
 router.delete('/:id/delete',
+    authenticate,
     userActionLimiter,
     validate(postIdValidation, 'params'),
     PostsController.destroy
 );
 
-router.post('/:postId/like',
+router.put('/:postId/react',
+    authenticate,
     userActionLimiter,
-    validate(likePostValidation, 'params'),
-    validate(likePostValidation),
-    PostsController.likePost
+    validate(reactPostParamsValidation, 'params'),
+    validate(reactPostBodyValidation, 'body'),
+    PostsController.reactPost
 );
 
 router.post('/:postId/repost',
+    authenticate,
     userActionLimiter,
     validate(repostPostValidation, 'params'),
     PostsController.repostPost

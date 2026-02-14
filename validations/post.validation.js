@@ -43,8 +43,11 @@ const postValidation = {
     }),
 
     // Like/Dislike validation
-    likePost: Joi.object({
-        postId: Joi.number().integer().positive().required(),
+    reactPostParamsValidation: Joi.object({
+        postId: Joi.number().integer().required()
+    }),
+
+    reactPostBodyValidation: Joi.object({
         type: Joi.string().valid('like', 'dislike').required()
     }),
 
@@ -88,7 +91,7 @@ const validate = (schema, property = 'body') => (req, res, next) => {
             field: detail.path.join('.'),
             message: detail.message
         }));
-        
+
         return res.status(400).json({
             error: 'Validation Error',
             details: errors

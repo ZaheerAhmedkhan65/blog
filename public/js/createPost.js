@@ -1,3 +1,4 @@
+// js/createPost.js
 document.addEventListener("DOMContentLoaded", () => {
   const postsContainer = document.querySelector(".posts-container");
   
@@ -19,11 +20,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
       notification(message, "success");
       resetPostForm();
-      setupReactionButtons();
+      // setupReactionButtons();
     },
     onError: (error) => {
       console.error("Post creation failed:", error);
-      notification("Failed to create post", "error");
+      notification("Failed to create post", "danger");
     }
   });
 

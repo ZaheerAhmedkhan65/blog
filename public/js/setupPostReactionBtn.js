@@ -1,3 +1,4 @@
+//js/setupPostReactionBtn.js
 const setupReactionButtons = () => {
     // Like functionality
     document.querySelectorAll('.like-btn').forEach(btn => {

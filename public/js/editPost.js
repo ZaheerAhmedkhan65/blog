@@ -1,3 +1,4 @@
+// js/editPost.js
 document.addEventListener('DOMContentLoaded', () => {
     const editPostModal = document.getElementById('editPostModal');
     let editPostEditor;
@@ -78,7 +79,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 notification(responseData.message || 'Post updated successfully', "success");
             },
             onError: (message) => {
-                notification(message, 'error');
+                notification(message, "danger");
             }
         });
 

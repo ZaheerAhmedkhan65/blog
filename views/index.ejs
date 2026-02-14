@@ -1,36 +1,23 @@
-<%- include('partials/_header') %>
-<div class="row gx-0">
-  <!-- Left Sidebar -->
-  <%- include('partials/_sidebar') %>
-
-  <!-- Main Content -->
-  <div class="col-lg-7 col-md-10 col-10 main-feed py-3">
-    <div class="card border-0 m-0 p-0">
-      <div class="card-body m-0 p-0">
-        <h1>Trending Posts</h1>
-        <div class="time-filters mb-3 bg-primary-subtle">
-          <button class="btn rounded-pill btn-sm btn-outline-primary time-filter active" data-period="1 HOUR">Hot Now</button>
-          <button class="btn rounded-pill btn-sm btn-outline-primary time-filter" data-period="24 HOUR">Today</button>
-          <button class="btn rounded-pill btn-sm btn-outline-primary time-filter" data-period="7 DAY">This Week</button>
-        </div>
-        <div class="posts-container">
-          <div class="text-center my-5">
-            <div class="spinner-border text-primary" role="status">
-              <span class="visually-hidden">Loading...</span>
-            </div>
-          </div>
+<div class="card border-0 m-0 p-0">
+  <div class="card-body m-0 p-0">
+    <h1>Trending Posts</h1>
+    <div class="time-filters mb-3 bg-primary-subtle">
+      <button class="btn rounded-pill btn-sm btn-outline-primary time-filter active" data-period="1 HOUR">Hot
+        Now</button>
+      <button class="btn rounded-pill btn-sm btn-outline-primary time-filter" data-period="24 HOUR">Today</button>
+      <button class="btn rounded-pill btn-sm btn-outline-primary time-filter" data-period="7 DAY">This Week</button>
+    </div>
+    <div class="posts-container">
+      <div class="text-center my-5">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading...</span>
         </div>
       </div>
     </div>
   </div>
-
-  <!-- Suggested Column -->
-  <%- include('partials/_suggested') %>
 </div>
-
 <script>
   const userId = "<%= userId %>";
   window.currentUserId = "<%= userId %>";
 </script>
 <script src="/js/index.js"></script>
-<%- include('partials/_footer') %>

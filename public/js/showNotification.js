@@ -1,15 +1,11 @@
 function notification(message,type){
-    const notificationContainer = document.createElement("div");
-    notificationContainer.classList.add("notification",type);
-    notificationContainer.innerHTML = `
-                                    <div class="p-2">
-                                        ${message}
-                                    </div> 
-                                    `;
+    const alertBox = document.createElement("div");
+    alertBox.classList.add("alert", "position-absolute", "top-0", "end-0", "m-3", "alert-" + type);
+    alertBox.innerHTML = `<div class="p-2">${message}</div>`;
 
-    document.body.appendChild(notificationContainer);
+    document.body.appendChild(alertBox);
     setTimeout(()=>{
-        notificationContainer.remove();
+        alertBox.remove();
     },3000)
 }
 

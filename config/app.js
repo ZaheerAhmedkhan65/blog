@@ -23,13 +23,13 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '../views'));
 app.set('layout', 'layouts/application');
 
-const routes = require('../routes/applicationRoutes');
-routes(app);
-
 app.use((req, res, next) => {
     res.locals.user = req.user || null;
     next();
 }); 
+
+const routes = require('../routes/applicationRoutes');
+routes(app);
 
 app.get('/', async (req, res) => {
     try {

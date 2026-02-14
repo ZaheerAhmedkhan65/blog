@@ -278,7 +278,7 @@ const PostsController = {
     },
 
     // Like/dislike a post
-    async likePost(req, res) {
+    async reactPost(req, res) {
         try {
             const { postId } = req.params;
             const { type } = req.body;
@@ -288,7 +288,7 @@ const PostsController = {
                 req.user.userId,
                 type
             );
-
+            
             res.json({
                 success: true,
                 data: {
