@@ -97,6 +97,74 @@ class Post {
         return count[0].count;
     }
 
+    // Get feed posts for a user (self + followed users)
+    static async getFeedPosts(userId, limit = 10, offset = 0, excludeSelf = false) {
+        let whereClause = `
+            WHERE p.is_draft = 0
+              AND p.published_at IS NOT NULL
+              AND p.published_at <= NOW()
+        `;
+
+        if (!excludeSelf) {
+            whereClause += ` AND (
+                p.user_id = ?
+                OR p.user_id IN (
+                    SELECT followed_user_id FROM followers WHERE follower_user_id = ?
+                )
+            )`;
+        } else {
+            whereClause += ` AND p.user_id IN (
+                SELECT followed_user_id FROM followers WHERE follower_user_id = ?
+            )`;
+        }
+
+        const query = `
+            SELECT p.*, u.name, u.avatar, u.email, u.created_at AS user_created_at
+            FROM posts p
+            JOIN users u ON p.user_id = u.id
+            ${whereClause}
+            ORDER BY p.published_at DESC, p.created_at DESC
+            LIMIT ? OFFSET ?
+        `;
+
+        const params = excludeSelf ? [userId, limit, offset] : [userId, userId, limit, offset];
+
+        const [posts] = await db.query(query, params);
+        return posts;
+    }
+
+    static async getFeedPostsCount(userId, excludeSelf = false) {
+        let whereClause = `
+            WHERE p.is_draft = 0
+              AND p.published_at IS NOT NULL
+              AND p.published_at <= NOW()
+        `;
+
+        if (!excludeSelf) {
+            whereClause += ` AND (
+                p.user_id = ?
+                OR p.user_id IN (
+                    SELECT followed_user_id FROM followers WHERE follower_user_id = ?
+                )
+            )`;
+        } else {
+            whereClause += ` AND p.user_id IN (
+                SELECT followed_user_id FROM followers WHERE follower_user_id = ?
+            )`;
+        }
+
+        const query = `
+            SELECT COUNT(*) as count
+            FROM posts p
+            ${whereClause}
+        `;
+
+        const params = excludeSelf ? [userId] : [userId, userId];
+
+        const [count] = await db.query(query, params);
+        return count[0].count;
+    }
+
     // Update a post
     static async updatePost(id, content, user_id, media_url, parent_post_id, is_draft, scheduled_at, published_at) {
         await db.query(

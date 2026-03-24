@@ -26,12 +26,22 @@ app.set('layout', 'layouts/application');
 
 app.use((req, res, next) => {
     res.locals.user = req.user || null;
+
+    // Override res.render for AJAX page nav (data-link) to disable layout.
+    const originalRender = res.render;
+    res.render = function(view, options = {}, callback) {
+        if (req.xhr || req.headers['x-requested-with'] === 'XMLHttpRequest') {
+            options = Object.assign({}, options, { layout: false });
+        }
+        return originalRender.call(this, view, options, callback);
+    };
+
     next();
-}); 
+});
 let routes;
-if(process.NODE_ENV == 'production') {
-    routes = require('../routes/appRoutes');  
-}else{
+if (process.NODE_ENV == 'production') {
+    routes = require('../routes/appRoutes');
+} else {
     routes = require('../routes/applicationRoutes');
 }
 routes(app);

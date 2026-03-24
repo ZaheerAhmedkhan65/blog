@@ -118,14 +118,15 @@ const userController = {
         try {
             const userId = parseInt(req.params.id);
             const { limit = 20, offset = 0 } = req.query;
+            const currentUserId = req.user.userId; // ✅ important
 
-            const result = await FollowerService.getFollowers(userId, { limit, offset });
+            const result = await FollowerService.getFollowers(userId, currentUserId, { limit, offset });
             // Format timestamps
             result.followers = result.followers.map(follower => ({
                 ...follower,
                 followed_at: formatRelativeTime(follower.created_at)
             }));
-            
+            console.log(result.followers);
             res.json({
                 success: true,
                 data: {

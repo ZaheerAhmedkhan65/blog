@@ -64,12 +64,12 @@ class FollowerService {
     }
 
     // Get followers list
-    static async getFollowers(userId, options = {}) {
+    static async getFollowers(userId, currentUserId, options = {}) {
         try {
             const { limit = 20, offset = 0 } = options;
 
-            let followers = await Follower.getFollowersByUserId(userId);
-
+            let followers = await Follower.getFollowersByUserId(userId, currentUserId);
+            console.log(followers);
             // Apply pagination
             const paginatedFollowers = followers.slice(offset, offset + limit);
 
@@ -78,6 +78,7 @@ class FollowerService {
                 return {
                     id: follower.follow_id,
                     created_at: follower.followed_at,
+                    is_followed_by_current_user: Boolean(follower.is_followed_by_current_user),
                     user: {
                         id: follower.user_id,
                         name: follower.name,

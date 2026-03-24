@@ -1,85 +1,94 @@
-<div class="col-lg-3 col-md-3 col-2 sidebar d-flex flex-column justify-content-between align-items-center align-items-lg-start py-3 px-2 max-vh-100 min-vh-100 position-sticky top-0">    
-    <div>
-          <a class="text-decoration-none d-none d-lg-block" href="/">
-            <img src="/images/logo/c/blog__480.png" alt="logo" width="100">
-          </a>
-          <div class="links-container nav flex-column text-center">
-              <a class="text-decoration-none d-lg-none d-block" href="/">
-                  <img src="/images/logo/c/logo_480_271.png" alt="logo" width="100">
-              </a>
-              
-              <button type="button" class="nav-link text-center text-lg-start p-0 bg-transparent border-0" data-bs-toggle="modal" data-bs-target="#notificationsModal">
-                <a href="#notification" class="nav-link text-center text-lg-start px-0">
-                  <i class="bi bi-bell"></i>
-                  <span class="d-none d-lg-inline"> Notifications</span>
-                </a>
-              </button>
-
-              <a href="#settings" class="nav-link text-center text-lg-start px-0">
-                <i class="bi bi-gear"></i>
-                <span class="d-none d-lg-inline"> Settings</span>
-              </a>
-
-              <button type="button" class="btn btn-primary my-3 rounded-pill" data-bs-toggle="modal" data-bs-target="#postModal">
-                Post
-              </button>
-          </div>
-    </div>
-    
-
-    <div class="current-user-profile d-flex align-items-center justify-content-center gap-2 w-100">
-  <!-- Avatar -->
-  <a href="/<%= user.username %>" class="text-decoration-none">
-    <img src="<%= user.avatar || '/images/default-avatar.png' %>"
-         alt="<%= user.name %>"
-         class="rounded-circle"
-         width="40"
-         height="40"
-         loading="lazy">
-  </a>
-
-  <!-- Name + Email -->
-  <div class="d-none d-lg-flex flex-column flex-grow-1 overflow-hidden">
-    <a href="/<%= user.username %>" class="text-decoration-none text-dark fw-bold truncate-text">
-      <span class="text-truncate"><%= user.username %></span>
+<div
+  class="col-lg-3 col-md-3 col-2 sidebar d-flex flex-column justify-content-between align-items-center align-items-lg-start py-3 px-2 max-vh-100 min-vh-100 position-sticky top-0 animate__animated animate__slideInLeft">
+  <div class="animate__animated animate__fadeIn animate__delay-1s">
+    <a class="text-decoration-none d-none d-lg-block animate__animated animate__bounceIn" href="/" data-link>
+      <img src="/images/logo/c/blog__480.png" alt="logo" width="100">
     </a>
-    <a href="/<%= user.username %>" class="text-decoration-none text-muted truncate-text">
-      <span class="text-truncate">@<%= user.email.split('@')[0] %></span>
-    </a>
-  </div>
+    <div class="links-container nav flex-column text-center animate__animated animate__fadeInUp animate__delay-2s">
+      <a class="text-decoration-none d-lg-none d-block animate__animated animate__bounceIn animate__delay-1s" href="/">
+        <img src="/images/logo/c/logo_480_271.png" alt="logo" width="100">
+      </a>
 
-  <!-- Dropdown -->
-  <div class="actions d-none d-lg-block ms-auto">
-    <div class="btn-group dropup">
-      <button type="button" class="border-0 p-0 bg-transparent" data-bs-toggle="dropdown" aria-expanded="false">
-        <i class="bi bi-three-dots-vertical text-dark"></i>
+      <button type="button"
+        class="nav-link text-center text-lg-start p-0 bg-transparent border-0 animate__animated animate__fadeInLeft animate__delay-3s"
+        data-bs-toggle="modal" data-bs-target="#notificationsModal">
+        <a href="#notification" class="nav-link text-center text-lg-start px-0">
+          <i class="bi bi-bell"></i>
+          <span class="d-none d-lg-inline"> Notifications</span>
+        </a>
       </button>
-      <ul class="dropdown-menu dropdown-menu-end">
-        <li><a href="/auth/logout" class="dropdown-item">Logout</a></li>
-      </ul>
+
+      <button type="button"
+        class="nav-link text-center text-lg-start p-0 bg-transparent border-0 animate__animated animate__fadeInLeft animate__delay-4s"
+        data-bs-toggle="modal" data-bs-target="#settingsModal">
+        <a href="#settings" class="nav-link text-center text-lg-start px-0">
+          <i class="bi bi-gear"></i>
+          <span class="d-none d-lg-inline"> Settings</span>
+        </a>
+      </button>
+
+      <button type="button"
+        class="btn btn-primary my-3 rounded-pill animate__animated animate__bounceIn animate__delay-5s"
+        data-bs-toggle="modal" data-bs-target="#postModal">
+        Post
+      </button>
     </div>
   </div>
+
+
+  <div
+    class="current-user-profile d-flex align-items-center justify-content-center gap-2 w-100 animate__animated animate__fadeInUp animate__delay-6s">
+    <!-- Avatar -->
+    <a href="/<%= user.username %>" class="text-decoration-none" data-link>
+      <img src="<%= user.avatar || '/images/default-avatar.png' %>" alt="<%= user.name %>" class="rounded-circle"
+        width="40" height="40" loading="lazy">
+    </a>
+
+    <!-- Name + Email -->
+    <div class="d-none d-lg-flex flex-column flex-grow-1 overflow-hidden">
+      <a href="/<%= user.username %>" class="text-decoration-none text-dark fw-bold truncate-text" data-link>
+        <span class="text-truncate">
+          <%= user.username %>
+        </span>
+      </a>
+      <a href="/<%= user.username %>" class="text-decoration-none text-muted truncate-text" data-link>
+        <span class="text-truncate">@<%= user.email.split('@')[0] %></span>
+      </a>
+    </div>
+
+    <!-- Dropdown -->
+    <div class="actions d-none d-lg-block ms-auto">
+      <div class="btn-group dropup">
+        <button type="button" class="border-0 p-0 bg-transparent" data-bs-toggle="dropdown" aria-expanded="false">
+          <i class="bi bi-three-dots-vertical text-dark"></i>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a href="/auth/logout" class="dropdown-item" data-link>Logout</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
 </div>
 
-  </div>
-
 <%- include('_following') %>
-<%- include('_followers') %>
-<%- include('_notifications') %>
-<%- include('_postModal') %>
+  <%- include('_followers') %>
+    <%- include('_notifications') %>
+      <%- include('_postModal') %>
+        <%- include('_settings') %>
 
-<script src="/js/utils.js"></script>
-<script src="/js/postTemplate.js"></script>
-<script src="/js/postEditor.js"></script>
-<script src="/js/postInteractions.js"></script>
-<!-- <script src="/js/createPost.js"></script>
+          <script src="/js/utils.js"></script>
+          <script src="/js/postTemplate.js"></script>
+          <script src="/js/postEditor.js"></script>
+          <script src="/js/postInteractions.js"></script>
+          <!-- <script src="/js/createPost.js"></script>
 <script src="/js/editPost.js"></script>
 <script src="/js/deletePost.js"></script>
 <script src="/js/setupPostReactionBtn.js"></script> -->
-<script src="https://unpkg.com/cropperjs"></script>
-<!-- Cropper.js CSS (REQUIRED) -->
-<link  href="https://unpkg.com/cropperjs@1.5.13/dist/cropper.min.css" rel="stylesheet" />
-<!-- Cropper.js JS -->
-<script src="https://unpkg.com/cropperjs@1.5.13/dist/cropper.min.js"></script>
-<!-- <script src="/js/post.js"></script>
+          <script src="https://unpkg.com/cropperjs"></script>
+          <!-- Cropper.js CSS (REQUIRED) -->
+          <link href="https://unpkg.com/cropperjs@1.5.13/dist/cropper.min.css" rel="stylesheet" />
+          <!-- Cropper.js JS -->
+          <script src="https://unpkg.com/cropperjs@1.5.13/dist/cropper.min.js"></script>
+          <!-- <script src="/js/post.js"></script>
 <script src="/js/postContent.js"></script> -->

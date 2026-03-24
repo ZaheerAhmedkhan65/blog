@@ -42,26 +42,45 @@ class Follower {
         return followings;
     }
 
-    static async getFollowersByUserId(userId) {
+    static async getFollowersByUserId(userId, currentUserId) {
+        console.log("currentUserId:", 1);
         const [followers] = await db.query(`
-            SELECT 
-                f.id as follow_id,
-                f.follower_user_id,
-                f.followed_user_id,
-                f.created_at as followed_at,
-                u.id as user_id,
-                u.name,
-                u.email,
-                u.avatar,
-                u.created_at as user_created_at
-            FROM followers f
-            JOIN users u ON f.follower_user_id = u.id
-            WHERE f.followed_user_id = ?
-            ORDER BY f.created_at DESC
-        `, [userId]);
+        SELECT 
+            f.id as follow_id,
+            f.follower_user_id,
+            f.followed_user_id,
+            f.created_at as followed_at,
+
+            u.id as user_id,
+            u.name,
+            u.email,
+            u.avatar,
+            u.created_at as user_created_at,
+
+            -- Mutual follow flag
+            CASE 
+                WHEN mf.id IS NOT NULL THEN 1
+                ELSE 0
+            END as is_followed_by_current_user
+
+        FROM followers f
+
+        -- The follower's user info
+        JOIN users u 
+            ON f.follower_user_id = u.id
+
+        -- Check if current user follows this follower back
+        LEFT JOIN followers mf
+            ON mf.follower_user_id = ?
+            AND mf.followed_user_id = f.follower_user_id
+
+        WHERE f.followed_user_id = ?
+        ORDER BY f.created_at DESC
+    `, [currentUserId, userId]);
+
         return followers;
     }
-
+    
     static async getFollowingsCountByUserId(userId) {
         const [count] = await db.query(
             'SELECT COUNT(*) as count FROM followers WHERE follower_user_id = ?',

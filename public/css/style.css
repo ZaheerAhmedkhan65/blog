@@ -1,16 +1,81 @@
-html{
+html {
     scrollbar-width: thin;
 }
 
-body{
-    max-height:100vh;
+body {
+    max-height: 100vh;
     height: 100%;
 }
 
-.main-feed{
+.main-feed {
     overflow-y: auto;
+    scrollbar-width: none;
+    /* Firefox */
+    -ms-overflow-style: none;
+    /* IE and Edge */
 }
 
+.main-feed::-webkit-scrollbar {
+    display: none;
+    /* Chrome, Safari, and Opera */
+}
+
+/* Animation enhancements */
+.post-card {
+    transition: all 0.3s ease;
+}
+
+.post-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.feed-filter {
+    transition: all 0.3s ease;
+}
+
+.feed-filter:hover {
+    transform: scale(1.05);
+}
+
+.btn {
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+.nav-link {
+    transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+    transform: translateX(5px);
+}
+
+.reaction-btn {
+    transition: all 0.2s ease;
+}
+
+.reaction-btn:hover {
+    transform: scale(1.1);
+}
+
+.card {
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Loading animations */
+.spinner-border {
+    animation: spinner-border 0.75s linear infinite, pulse 2s infinite;
+}
+
+/* Notification animations */
 .notification {
     position: fixed;
     top: 10px;
@@ -37,19 +102,23 @@ body{
 }
 
 .content-editor {
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  overflow-y: auto;
-  overflow-x: hidden; /* prevents horizontal overflow */
-  max-height: 300px;
-  min-width: 0; /* ensure it doesn't overflow parent */
-  width: 100%; /* make sure it fits inside flex container */
-  display: block;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    overflow-y: auto;
+    overflow-x: hidden;
+    /* prevents horizontal overflow */
+    max-height: 300px;
+    min-width: 0;
+    /* ensure it doesn't overflow parent */
+    width: 100%;
+    /* make sure it fits inside flex container */
+    display: block;
 }
 
 .flex-grow-1 {
-  min-width: 0; /* fix for flex children overflowing horizontally */
+    min-width: 0;
+    /* fix for flex children overflowing horizontally */
 }
 
 
@@ -60,8 +129,8 @@ body{
 }
 
 .post-content {
-  word-wrap: break-word;
-  overflow-wrap: break-word;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 
@@ -74,23 +143,26 @@ body{
     max-width: 400px;
     margin: 0 auto;
     margin-top: 2rem;
-    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
     border-radius: 10px;
 }
+
 .auth-header {
     text-align: center;
     padding: 1.5rem;
     border-bottom: 1px solid #eee;
 }
+
 .auth-body {
     padding: 2rem;
 }
+
 .btn-signin {
     width: 100%;
     padding: 0.5rem;
 }
 
-#update-avatar-form{
+#update-avatar-form {
     bottom: 10px;
     right: 5px;
     background-color: #333;
@@ -103,29 +175,30 @@ body{
 }
 
 .truncate-text {
-  max-width: 165px;     /* You can adjust this width as needed */
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+    max-width: 165px;
+    /* You can adjust this width as needed */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 @media (max-width: 576px) {
-  .truncate-text {
-    max-width: 130px;
-  }
+    .truncate-text {
+        max-width: 130px;
+    }
 }
 
 
 @media (max-width: 762px) {
-    #image-preview img{
+    #image-preview img {
         width: 60px !important;
         height: 60px !important;
     }
-    
-#update-avatar-form{
-    bottom: 5px;
-    right: -5px;
-    width: 20px;
-    height: 20px;
-}
+
+    #update-avatar-form {
+        bottom: 5px;
+        right: -5px;
+        width: 20px;
+        height: 20px;
+    }
 }

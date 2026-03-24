@@ -1,12 +1,17 @@
 // js/index.js
 document.addEventListener('DOMContentLoaded', async () => {
     const postsContainer = document.querySelector('.posts-container');
-    const timeFilters = document.querySelectorAll('.time-filter');
+    const feedFilters = document.querySelectorAll('.feed-filter');
 
-    // Cache for already loaded posts
-    const postsCache = new Map();
+    const FEED_LIMIT = 10;
+    let feedOffset = 0;
+    let feedHasMore = true;
+    let isLoading = false;
+    let currentFeedType = 'for-you'; // values: for-you, following
 
-    // Setup reaction buttons
+    // Cache for already loaded posts by feed type
+    const feedCache = new Map();
+
     const setupReactionButtons = () => {
         const reactionButtons = document.querySelectorAll('.reaction-btn');
         reactionButtons.forEach(button => {
@@ -51,17 +56,37 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     };
 
-    // Function to load posts
-    const loadTrendingPosts = async (period = '24 HOUR') => {
-        try {
-            // Show cached content immediately if available
-            if (postsCache.has(period)) {
-                postsContainer.innerHTML = postsCache.get(period);
-                setupReactionButtons();
-                return;
-            }
+    const renderPosts = (posts, replace = false) => {
+        if (replace) {
+            postsContainer.innerHTML = '';
+        }
 
-            // Show loading state
+        if (posts.length === 0 && feedOffset === 0) {
+            postsContainer.innerHTML = `
+                <div class="alert alert-info animate__animated animate__fadeIn">
+                    No posts in your feed yet. Follow users to see more content.
+                </div>
+            `;
+            return;
+        }
+
+        posts.forEach((post, index) => {
+            const postElement = postTemplate(post);
+            // Add staggered animation delay for each post
+            const delay = index * 0.1; // 0.1s delay between each post
+            postElement.style.animationDelay = `${delay}s`;
+            postsContainer.appendChild(postElement);
+        });
+
+        setupReactionButtons();
+    };
+
+    const loadFeedPosts = async (feedType = 'for-you') => {
+        if (isLoading || !feedHasMore || currentFeedType !== feedType) return;
+
+        isLoading = true;
+
+        if (feedOffset === 0) {
             postsContainer.innerHTML = `
                 <div class="text-center my-5">
                     <div class="spinner-border text-primary" role="status">
@@ -69,73 +94,87 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </div>
                 </div>
             `;
+        } else {
+            const loadMoreSpinner = document.createElement('div');
+            loadMoreSpinner.className = 'text-center my-3';
+            loadMoreSpinner.id = 'feed-load-more-spinner';
+            loadMoreSpinner.innerHTML = '<div class="spinner-border text-primary" role="status"></div>';
+            postsContainer.appendChild(loadMoreSpinner);
+        }
 
-            // Fetch data with cache-busting
-            const response = await fetch(`/posts/trending?period=${encodeURIComponent(period)}&_=${Date.now()}`);
-
+        try {
+            const excludeSelf = feedType === 'following' ? 'true' : 'false';
+            const response = await fetch(`/posts/feed?limit=${FEED_LIMIT}&offset=${feedOffset}&excludeSelf=${excludeSelf}`);
             if (!response.ok) {
                 throw new Error(`Server returned ${response.status}`);
             }
 
             const result = await response.json();
-
             if (!result.success || !result.data || !Array.isArray(result.data.posts)) {
-                throw new Error('Invalid posts data received');
+                throw new Error('Invalid feed response');
             }
 
             const posts = result.data.posts;
 
-            postsContainer.innerHTML = '';
-
-            // Check if there are posts
-            if (posts.length === 0) {
-                postsContainer.innerHTML = `
-                    <div class="alert alert-info">
-                        No trending posts found for this period.
-                    </div>
-                `;
-                postsCache.set(period, postsContainer.innerHTML);
-                return;
+            if (document.getElementById('feed-load-more-spinner')) {
+                document.getElementById('feed-load-more-spinner').remove();
             }
 
-            // Render posts
-            posts.forEach((post) => {
-                postsContainer.appendChild(postTemplate(post));
-            });
+            renderPosts(posts, feedOffset === 0);
 
-            // Cache the rendered HTML
-            postsCache.set(period, postsContainer.innerHTML);
-
-            // Initialize event listeners
-            setupReactionButtons();
+            feedOffset += posts.length;
+            feedHasMore = Boolean(result.data.pagination && result.data.pagination.hasMore);
+            if (!feedHasMore && posts.length === 0 && feedOffset === 0) {
+                // If feed is empty and fallback may have loaded trending
+                postsContainer.innerHTML = `
+                    <div class="alert alert-info">
+                        No posts found in your feed yet.
+                    </div>
+                `;
+            }
 
         } catch (error) {
-            console.error('Error loading trending posts:', error);
+            console.error('Error loading feed posts:', error);
             postsContainer.innerHTML = `
                 <div class="alert alert-danger">
-                    Failed to load trending posts. ${error.message}
+                    Failed to load feed posts. ${error.message}
                 </div>
             `;
+        } finally {
+            isLoading = false;
         }
     };
 
-    // Time filter event listeners with debounce
-    let debounceTimer;
-    timeFilters.forEach(filter => {
+    // Feed filter event listeners
+    feedFilters.forEach(filter => {
         filter.addEventListener('click', function () {
-            clearTimeout(debounceTimer);
-            timeFilters.forEach(f => f.classList.remove('active'));
+            const feedType = this.dataset.feedType;
+            if (currentFeedType === feedType) return;
+
+            // Update active state
+            feedFilters.forEach(f => f.classList.remove('active'));
             this.classList.add('active');
 
-            // Debounce to prevent rapid clicks
-            debounceTimer = setTimeout(() => {
-                loadTrendingPosts(this.dataset.period);
-            }, 200);
+            // Reset feed state
+            currentFeedType = feedType;
+            feedOffset = 0;
+            feedHasMore = true;
+            isLoading = false;
+
+            // Load new feed
+            loadFeedPosts(feedType);
         });
     });
 
-    // Initial load - use the active filter's period
-    const activeFilter = document.querySelector('.time-filter.active');
-    const initialPeriod = activeFilter ? activeFilter.dataset.period : '24 HOUR';
-    loadTrendingPosts(initialPeriod);
+    // Infinite scroll for feed
+    window.addEventListener('scroll', () => {
+        if (isLoading || !feedHasMore) return;
+
+        if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 300) {
+            loadFeedPosts(currentFeedType);
+        }
+    });
+
+    // Initial load of feed
+    loadFeedPosts('for-you');
 });
