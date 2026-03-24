@@ -9,7 +9,7 @@ function postTemplate(post) {
   }
 
   const postElement = document.createElement('div');
-  postElement.classList.add('card', 'rounded-0', 'post-card');
+  postElement.classList.add('card', 'rounded-0', 'post-card', 'animate__animated', 'animate__fadeInUp');
   postElement.id = `post-${post.id}`;
   postElement.innerHTML = `
     <div class="card-body">
@@ -34,9 +34,9 @@ function postTemplate(post) {
               <span class="text-muted small">${formatRelativeTime(post.created_at)} <i class="bi bi-dot"></i> </span>
               ${post.user.id == userId ? `
               <span class="post-status">
-                ${post.published_at ? '' : post.scheduled_at ? 
-                  '<span class="badge bg-info">Scheduled</span>' : 
-                  post.is_draft ? '<span class="badge bg-secondary">Draft</span>' : ''}
+                ${post.published_at ? '' : post.scheduled_at ?
+        '<span class="badge bg-info">Scheduled</span>' :
+        post.is_draft ? '<span class="badge bg-secondary">Draft</span>' : ''}
               </span>` : ''}
               <div class="dropdown">
                 <button class="btn btn-sm p-0 bg-transparent border-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">

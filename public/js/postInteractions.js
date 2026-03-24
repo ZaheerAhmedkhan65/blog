@@ -46,19 +46,33 @@
         const message = responseData.message || (postIdInput.value ? 'Post updated' : 'Post created');
         bootstrapModal.hide();
 
+        // Add success animation to the modal
+        if (modal) {
+            modal.classList.add('animate__animated', 'animate__bounceOut');
+            setTimeout(() => {
+                modal.classList.remove('animate__animated', 'animate__bounceOut');
+            }, 1000);
+        }
+
         if (postIdInput.value) {
             // Edit mode: update existing post card
             const oldCard = document.getElementById(`post-${newPost.id}`);
             if (oldCard) {
                 const newCard = postTemplate(newPost);
+                newCard.classList.add('animate__animated', 'animate__pulse');
                 oldCard.replaceWith(newCard);
+                setTimeout(() => {
+                    newCard.classList.remove('animate__animated', 'animate__pulse');
+                }, 1000);
             }
         } else {
             // Create mode: try to prepend to the feed if we are on a page that has one
             const postsContainer = document.querySelector('.posts-container');
             if (postsContainer) {
                 const newCard = postTemplate(newPost);
+                newCard.classList.add('animate__animated', 'animate__fadeInDown');
                 postsContainer.prepend(newCard);
+                setupReactionButtons();
             }
             // If no container (e.g., single post page), just show success – user can navigate to home
         }
@@ -224,8 +238,8 @@
         try {
             const response = await fetch(`/posts/${postId}/delete`, {
                 method: 'DELETE',
-                headers: { 
-                    'Content-Type': 'application/json' 
+                headers: {
+                    'Content-Type': 'application/json'
                 }
             });
             if (response.ok) {

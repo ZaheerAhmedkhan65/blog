@@ -93,9 +93,10 @@ class AuthService {
     static async forgotPassword(email) {
         try {
             const user = await User.findByEmail(email);
+            console.log("user", user)
             if (!user) {
                 // Don't reveal if user exists for security
-                return { message: 'If an account exists with this email, you will receive a reset link.' };
+                throw new Error('If an account exists with this email, you will receive a reset link.');
             }
 
             // Generate reset token
@@ -110,7 +111,7 @@ class AuthService {
 
             // Send reset email
             const resetUrl = `${process.env.FRONTEND_URL || process.env.BASE_URL}/auth/reset-password/${resetToken}`;
-
+            console.log("resetUrl", resetUrl)
             await sendEmail({
                 to: user.email,
                 subject: 'Password Reset Request',

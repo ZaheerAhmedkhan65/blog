@@ -288,7 +288,7 @@ const PostsController = {
                 req.user.userId,
                 type
             );
-            
+
             res.json({
                 success: true,
                 data: {
@@ -363,6 +363,52 @@ const PostsController = {
             res.status(statusCode).json({
                 success: false,
                 error: errorMessage
+            });
+        }
+    },
+
+    // Get feed posts (self + followed users) with pagination
+    async getFeedPosts(req, res) {
+        try {
+            const { limit = 10, offset = 0, excludeSelf = false } = req.query;
+
+            const result = await PostService.getFeedPosts(req.user.userId, {
+                limit: parseInt(limit),
+                offset: parseInt(offset),
+                excludeSelf: excludeSelf === 'true'
+            });
+
+            const formattedPosts = result.posts.map(post => ({
+                ...post,
+                likes: formatNumberCompact(post.likes || 0),
+                dislikes: formatNumberCompact(post.dislikes || 0),
+                reposts: formatNumberCompact(post.reposts || 0),
+                created_at: formatRelativeTime(post.created_at),
+                user: {
+                    ...post.user,
+                    created_at: formatRelativeTime(post.user.created_at)
+                }
+            }));
+
+            res.json({
+                success: true,
+                data: {
+                    posts: formattedPosts,
+                    pagination: {
+                        total: result.total,
+                        limit: parseInt(limit),
+                        offset: parseInt(offset),
+                        hasMore: result.hasMore,
+                        isFallback: result.isFallback || false
+                    }
+                }
+            });
+        } catch (error) {
+            console.error('Error fetching feed posts:', error);
+            res.status(500).json({
+                success: false,
+                error: 'Failed to fetch feed posts',
+                details: process.env.NODE_ENV === 'development' ? error.message : undefined
             });
         }
     },

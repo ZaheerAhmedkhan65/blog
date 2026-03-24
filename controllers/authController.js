@@ -84,7 +84,7 @@ const authController = {
     forgotPassword: async (req, res) => {
         try {
             const { email } = req.body;
-
+            console.log(email)
             const result = await AuthService.forgotPassword(email);
 
             res.render('auth/forgot-password', {

@@ -81,10 +81,10 @@ document.addEventListener("DOMContentLoaded", () => {
                         </div>
                          <div class="d-flex flex-column">
                             <p class="text-muted">${follower.followed_at}</p>
-                            <button class="btn btn-sm btn-primary rounded-pill follow-btn" 
+                            <button class="btn btn-sm ${follower.is_followed_by_current_user ? 'btn-outline-primary' : 'btn-primary'} rounded-pill follow-btn" 
                                 data-user-id="${follower.user.id}"
                                 style="min-width: 80px">
-                                Follow
+                                ${follower.is_followed_by_current_user ? 'Unfollow' : 'Follow'}
                             </button>
                         </div>
                     </div>

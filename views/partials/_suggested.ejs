@@ -1,10 +1,11 @@
-<div class="col-lg-3 d-none d-lg-block py-3 px-2 max-vh-100 min-vh-100 position-sticky top-0">
-  <div class="card">
+<div
+  class="col-lg-3 d-none d-lg-block py-3 px-2 max-vh-100 min-vh-100 position-sticky top-0 animate__animated animate__slideInRight animate__delay-7s">
+  <div class="card animate__animated animate__fadeIn animate__delay-8s">
     <div class="card-body">
-      <p class="card-title fw-bold fs-5 mb-0">Who to follow</p>
+      <p class="card-title fw-bold fs-5 mb-0 animate__animated animate__fadeInDown">Who to follow</p>
       <ul class="suggested-users-container list-group list-group-flush p-0">
         <div class="my-3">
-          <div class="spinner-border text-primary" role="status">
+          <div class="spinner-border text-primary animate__animated animate__rotateIn" role="status">
             <span class="visually-hidden">Loading...</span>
           </div>
         </div>
@@ -14,13 +15,13 @@
 </div>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('DOMContentLoaded', function () {
     const suggestedUsersContainer = document.querySelector('.suggested-users-container');
     const currentUserId = document.body.dataset.userId; // Assuming you set this in your template
-    
+
     // Cache for already loaded users
     const usersCache = new Map();
-    
+
     const loadSuggestedUsers = async () => {
       try {
         // Show loading state
@@ -31,7 +32,7 @@
             </div>
           </div>
         `;
-        
+
         // Fetch data
         const response = await fetch('/suggested_user', {
           headers: {
@@ -40,20 +41,20 @@
           },
           credentials: 'include'
         });
-        
+
         if (!response.ok) {
           throw new Error(`Server returned ${response.status}`);
         }
-        
+
         const users = await response.json();
-        
+
         if (!users || !Array.isArray(users)) {
           throw new Error('Invalid users data received');
         }
-        
+
         // Filter out current user if present
         const filteredUsers = users.filter(user => user.id !== parseInt(currentUserId));
-        
+
         // Update the DOM with the loaded users
         suggestedUsersContainer.innerHTML = '';
 
@@ -79,12 +80,12 @@
         `;
       }
     };
-    
+
     const createUserCard = (user) => {
       const userElement = document.createElement('li');
       userElement.classList.add('list-group-item', "px-0");
       userElement.dataset.userId = user.id;
-      
+
       userElement.innerHTML = `
         <div class="d-flex align-items-center justify-content-between">
           <a href="/${user.name}" class="text-decoration-none d-flex align-items-center flex-grow-1">
@@ -107,63 +108,63 @@
           </button>
         </div>
       `;
-      
+
       suggestedUsersContainer.appendChild(userElement);
     };
-    
+
     // Handle follow/unfollow actions
     document.addEventListener('click', async (e) => {
-  if (e.target.classList.contains('follow-btn')) {
-    const btn = e.target;
-    const userId = btn.dataset.userId;
-    const isFollowing = btn.classList.contains('btn-outline-primary');
-    const endpoint = isFollowing ? 'unfollow' : 'follow';
-    const method = isFollowing ? 'DELETE' : 'POST';
-    
-    try {
-      btn.disabled = true;
-      btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>`;
-      
-      const response = await fetch(`/users/${userId}/${endpoint}`, {
-        method: method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        credentials: 'include'
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `Server returned ${response.status}`);
+      if (e.target.classList.contains('follow-btn')) {
+        const btn = e.target;
+        const userId = btn.dataset.userId;
+        const isFollowing = btn.classList.contains('btn-outline-primary');
+        const endpoint = isFollowing ? 'unfollow' : 'follow';
+        const method = isFollowing ? 'DELETE' : 'POST';
+
+        try {
+          btn.disabled = true;
+          btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>`;
+
+          const response = await fetch(`/users/${userId}/${endpoint}`, {
+            method: method,
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            credentials: 'include'
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `Server returned ${response.status}`);
+          }
+
+          const data = await response.json();
+
+          // Update UI
+          if (isFollowing) {
+            btn.classList.remove('btn-outline-primary');
+            btn.classList.add('btn-primary');
+            btn.textContent = 'Follow';
+          } else {
+            btn.classList.remove('btn-primary');
+            btn.classList.add('btn-outline-primary');
+            btn.textContent = 'Unfollow';
+          }
+
+          showNotification(data.message, 'success');
+
+        } catch (error) {
+          console.error('Follow action failed:', error);
+          showNotification(error.message || 'Action failed. Please try again.', 'danger');
+          // Reset button state if error occurs
+          btn.textContent = isFollowing ? 'Unfollow' : 'Follow';
+        } finally {
+          btn.disabled = false;
+        }
       }
-      
-      const data = await response.json();
-      
-      // Update UI
-      if (isFollowing) {
-        btn.classList.remove('btn-outline-primary');
-        btn.classList.add('btn-primary');
-        btn.textContent = 'Follow';
-      } else {
-        btn.classList.remove('btn-primary');
-        btn.classList.add('btn-outline-primary');
-        btn.textContent = 'Unfollow';
-      }
-      
-      showNotification(data.message, 'success');
-      
-    } catch (error) {
-      console.error('Follow action failed:', error);
-      showNotification(error.message || 'Action failed. Please try again.', 'danger');
-      // Reset button state if error occurs
-      btn.textContent = isFollowing ? 'Unfollow' : 'Follow';
-    } finally {
-      btn.disabled = false;
-    }
-  }
-});
-    
+    });
+
     // Helper function to show notifications
     const showNotification = (message, type = 'info') => {
       // Example: Toast notification
@@ -181,10 +182,10 @@
       document.body.appendChild(toast);
       setTimeout(() => toast.remove(), 3000);
     };
-    
+
     // Initial load
     loadSuggestedUsers();
-    
+
     // Refresh every 5 minutes
     setInterval(loadSuggestedUsers, 300000);
   });

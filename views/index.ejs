@@ -1,16 +1,18 @@
 <div class="px-1">
-  <div class="card mb-3 border-0">
+  <div class="card mb-3 border-0 position-sticky top-0 animate__animated animate__slideInDown"
+    style="z-index: 1020; background-color: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);">
     <div class="card-body bg-primary-subtle rounded py-1">
-      <div class="time-filters d-flex align-items-center justify-content-around">
-        <button class="btn rounded-pill btn-sm btn-outline-primary time-filter active" data-period="1 HOUR">Hot Now</button>
-        <button class="btn rounded-pill btn-sm btn-outline-primary time-filter" data-period="24 HOUR">Today</button>
-        <button class="btn rounded-pill btn-sm btn-outline-primary time-filter" data-period="7 DAY">This Week</button>
+      <div class="feed-filters d-flex align-items-center justify-content-around">
+        <button class="btn rounded-pill btn-sm btn-outline-primary feed-filter active animate__animated animate__pulse animate__infinite animate__slow" data-feed-type="for-you">For
+          You</button>
+        <button class="btn rounded-pill btn-sm btn-outline-primary feed-filter animate__animated animate__pulse animate__infinite animate__slow"
+          data-feed-type="following">Following</button>
       </div>
     </div>
   </div>
-  <div class="posts-container">
+  <div class="posts-container animate__animated animate__fadeIn animate__delay-3s">
     <div class="text-center my-5">
-      <div class="spinner-border text-primary" role="status">
+      <div class="spinner-border text-primary animate__animated animate__rotateIn" role="status">
         <span class="visually-hidden">Loading...</span>
       </div>
     </div>

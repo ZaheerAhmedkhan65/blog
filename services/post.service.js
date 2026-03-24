@@ -60,7 +60,7 @@ class PostService {
                     email: user.email
                 }
             }
-            
+
             return {
                 post
             };
@@ -94,7 +94,8 @@ class PostService {
                     id: user.id,
                     name: user.name,
                     avatar: user.avatar,
-                    email: user.email
+                    email: post.email,
+                    created_at: post.user_created_at
                 },
                 likes: reactions.likes,
                 dislikes: reactions.dislikes,
@@ -161,6 +162,67 @@ class PostService {
         }
     }
 
+    // Get feed posts with pagination (self + followed users)
+    static async getFeedPosts(currentUserId, options = {}) {
+        try {
+            const { limit = 10, offset = 0, excludeSelf = false } = options;
+
+            // Fetch feed posts from model
+            let posts = await Post.getFeedPosts(currentUserId, limit, offset, excludeSelf);
+            const total = await Post.getFeedPostsCount(currentUserId, excludeSelf);
+
+            // If no feed posts, fallback to trending top posts (only for first page)
+            let fallback = false;
+            if (posts.length === 0 && offset === 0) {
+                fallback = true;
+                posts = await this.getTrendingPosts(currentUserId, { limit, period: '24 HOUR' });
+                return {
+                    posts,
+                    total: posts.length,
+                    hasMore: false,
+                    isFallback: true
+                };
+            }
+
+            // Enrich posts with engagement + user reaction/repost status
+            const postsWithEngagement = await Promise.all(
+                posts.map(async (post) => {
+                    const [reactions, repostCount, userReaction, hasReposted] = await Promise.all([
+                        Post.getReactions(post.id),
+                        Post.getRepostCount(post.id),
+                        currentUserId ? Post.getUserReaction(post.id, currentUserId) : Promise.resolve(null),
+                        currentUserId ? Post.hasReposted(post.id, currentUserId) : Promise.resolve(false)
+                    ]);
+
+                    return {
+                        ...post,
+                        user: {
+                            id: post.user_id,
+                            name: post.name,
+                            avatar: post.avatar,
+                            email: post.email
+                        },
+                        likes: reactions.likes,
+                        dislikes: reactions.dislikes,
+                        reposts: repostCount,
+                        userReaction,
+                        hasReposted,
+                        isOwner: currentUserId === post.user_id
+                    };
+                })
+            );
+
+            return {
+                posts: postsWithEngagement,
+                total,
+                hasMore: total > offset + limit,
+                isFallback: fallback
+            };
+        } catch (error) {
+            throw new Error(`Failed to get feed posts: ${error.message}`);
+        }
+    }
+
     // Update a post
     static async updatePost(postId, updateData, userId) {
         try {
@@ -206,15 +268,15 @@ class PostService {
             const user = await User.findById(userId);
 
             return {
-               post: {
-                   ...updatedPost,
-                   user: {
-                       id: user.id,
-                       name: user.name,
-                       avatar: user.avatar,
-                       email: user.email
-                   }
-               }
+                post: {
+                    ...updatedPost,
+                    user: {
+                        id: user.id,
+                        name: user.name,
+                        avatar: user.avatar,
+                        email: user.email
+                    }
+                }
             };
         } catch (error) {
             throw new Error(`Failed to update post: ${error.message}`);

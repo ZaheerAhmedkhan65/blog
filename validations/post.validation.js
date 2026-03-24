@@ -71,6 +71,13 @@ const postValidation = {
             .default('24 HOUR')
     }),
 
+    // Get feed posts validation
+    getFeedPosts: Joi.object({
+        limit: Joi.number().integer().min(1).max(100).default(10),
+        offset: Joi.number().integer().min(0).default(0),
+        excludeSelf: Joi.boolean().default(false)
+    }),
+
     // Get user posts validation
     getUserPosts: Joi.object({
         id: Joi.number().integer().positive().required(),

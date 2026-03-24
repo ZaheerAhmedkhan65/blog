@@ -14,6 +14,7 @@ const {
     repostPost: repostPostValidation,
     searchPosts: searchPostsValidation,
     getTrendingPosts: getTrendingPostsValidation,
+    getFeedPosts: getFeedPostsValidation,
     getUserPosts: getUserPostsValidation,
     validate
 } = require('../validations/post.validation');
@@ -37,6 +38,12 @@ router.get('/trending',
     generalLimiter,
     validate(getTrendingPostsValidation, 'query'),
     PostsController.getTrendingPosts
+);
+
+router.get('/feed',
+    generalLimiter,
+    validate(getFeedPostsValidation, 'query'),
+    PostsController.getFeedPosts
 );
 
 router.get('/users/:id',
